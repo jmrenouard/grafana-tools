@@ -12,11 +12,12 @@
     state: directory
     mode: '0755'
 
-- name: Import Elastic GPG key
-  ansible.builtin.shell:
-    cmd: wget -q -O - https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor > /etc/apt/keyrings/elastic.gpg
-  args:
-    creates: /etc/apt/keyrings/elastic.gpg
+- name: Download Elastic GPG key
+  ansible.builtin.get_url:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    dest: /etc/apt/keyrings/elastic.gpg
+    mode: '0644'
+    force: no
 
 - name: Add Elastic repository
   ansible.builtin.apt_repository:
