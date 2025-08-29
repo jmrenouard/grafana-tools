@@ -3,6 +3,9 @@
 # grafana_helper.py
 # -----------------------------------------------------------------------------
 #
+__version__ = "1.0.0"
+# -----------------------------------------------------------------------------
+#
 # Description:
 # Outil en ligne de commande pour générer et publier des dashboards Grafana
 # à partir d'un fichier de configuration YAML simple.
