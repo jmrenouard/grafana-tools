@@ -1,0 +1,79 @@
+#
+# -----------------------------------------------------------------------------
+# linux-network.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision dédié au réseau pour un serveur Linux.
+#
+# Prérequis:
+#   - Un exportateur de nœuds Prometheus (`node_exporter`) doit être en cours
+#     d'exécution sur le serveur cible.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "Linux Server - Network Focus"
+  description: "Dedicated network monitoring for a Linux server."
+  tags: ['linux', 'node-exporter', 'autogen', 'network']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(node_uname_info, instance)"
+    multi: true
+    includeAll: true
+  - name: "device"
+    label: "Device"
+    type: "query"
+    datasource: "Prometheus"
+    query: 'label_values(node_network_receive_bytes_total{instance=~"$instance", device!~"lo"}, device)'
+    multi: true
+    includeAll: true
+
+panels:
+  - title: "Network Traffic (bytes/sec)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 0 }
+    options:
+      unit: "bytes"
+    targets:
+      - expr: 'rate(node_network_receive_bytes_total{instance=~"$instance", device=~"$device"}[5m])'
+        legendFormat: "{{instance}} - Ingress {{device}}"
+      - expr: 'rate(node_network_transmit_bytes_total{instance=~"$instance", device=~"$device"}[5m])'
+        legendFormat: "{{instance}} - Egress {{device}}"
+
+  - title: "Network Packets (packets/sec)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 8 }
+    targets:
+      - expr: 'rate(node_network_receive_packets_total{instance=~"$instance", device=~"$device"}[5m])'
+        legendFormat: "{{instance}} - Ingress {{device}}"
+      - expr: 'rate(node_network_transmit_packets_total{instance=~"$instance", device=~"$device"}[5m])'
+        legendFormat: "{{instance}} - Egress {{device}}"
+
+  - title: "Network Errors (per sec)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 8 }
+    targets:
+      - expr: 'rate(node_network_receive_errs_total{instance=~"$instance", device=~"$device"}[5m])'
+        legendFormat: "{{instance}} - Receive Errors {{device}}"
+      - expr: 'rate(node_network_transmit_errs_total{instance=~"$instance", device=~"$device"}[5m])'
+        legendFormat: "{{instance}} - Transmit Errors {{device}}"
+
+  - title: "Network Dropped Packets (per sec)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 16 }
+    targets:
+      - expr: 'rate(node_network_receive_drop_total{instance=~"$instance", device=~"$device"}[5m])'
+        legendFormat: "{{instance}} - Receive Dropped {{device}}"
+      - expr: 'rate(node_network_transmit_drop_total{instance=~"$instance", device=~"$device"}[5m])'
+        legendFormat: "{{instance}} - Transmit Dropped {{device}}"

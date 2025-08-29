@@ -1,0 +1,64 @@
+#
+# -----------------------------------------------------------------------------
+# nginx-requests.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision des requêtes pour un serveur web Nginx,
+#   utilisant les métriques d'un parseur de logs comme `grok_exporter`.
+#
+# Prérequis:
+#   - Un exportateur qui parse les logs d'accès Nginx et expose des métriques
+#     Prometheus (ex: `grok_exporter`, `mtail`).
+#   - Les métriques doivent inclure des labels pour `method`, `status`, `request_uri`.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "Nginx - Request Analysis"
+  description: "Detailed request analysis for an Nginx web server."
+  tags: ['nginx', 'web-server', 'autogen', 'requests']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(nginx_http_requests_total, instance)"
+    multi: true
+    includeAll: true
+
+panels:
+  - title: "Requests by Status Code"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 0 }
+    targets:
+      - expr: 'sum(rate(nginx_http_requests_total{instance=~"$instance"}[5m])) by (status)'
+        legendFormat: "{{status}}"
+
+  - title: "Requests by Method"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 0 }
+    targets:
+      - expr: 'sum(rate(nginx_http_requests_total{instance=~"$instance"}[5m])) by (method)'
+        legendFormat: "{{method}}"
+
+  - title: "Top 10 Requested URIs"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 16, w: 12, x: 0, y: 8 }
+    targets:
+      - expr: 'topk(10, sum(rate(nginx_http_requests_total{instance=~"$instance"}[5m])) by (request_uri))'
+        legendFormat: "{{request_uri}}"
+
+  - title: "Top 10 404 Not Found URIs"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 16, w: 12, x: 12, y: 8 }
+    targets:
+      - expr: 'topk(10, sum(rate(nginx_http_requests_total{instance=~"$instance", status="404"}[5m])) by (request_uri))'
+        legendFormat: "{{request_uri}}"

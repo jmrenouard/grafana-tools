@@ -1,0 +1,60 @@
+#
+# -----------------------------------------------------------------------------
+# nginx-performance.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision de la performance pour Nginx, utilisant les
+#   métriques de `nginx-ingress-controller` ou un parseur de logs avancé.
+#
+# Prérequis:
+#   - Un exportateur qui expose les métriques de performance de Nginx,
+#     comme `nginx-ingress-controller` pour Kubernetes, ou un parseur de logs
+#     configuré pour extraire `request_time`, `upstream_response_time`, etc.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "Nginx - Performance Analysis"
+  description: "Detailed performance analysis for an Nginx web server."
+  tags: ['nginx', 'web-server', 'autogen', 'performance']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(nginx_http_request_duration_seconds_bucket, instance)"
+    multi: true
+    includeAll: true
+
+panels:
+  - title: "Request Time (99th, 95th, 50th percentile)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 10, w: 24, x: 0, y: 0 }
+    options:
+      unit: "seconds"
+    targets:
+      - expr: 'histogram_quantile(0.99, sum(rate(nginx_http_request_duration_seconds_bucket{instance=~"$instance"}[5m])) by (le, instance))'
+        legendFormat: "p99 - {{instance}}"
+      - expr: 'histogram_quantile(0.95, sum(rate(nginx_http_request_duration_seconds_bucket{instance=~"$instance"}[5m])) by (le, instance))'
+        legendFormat: "p95 - {{instance}}"
+      - expr: 'histogram_quantile(0.50, sum(rate(nginx_http_request_duration_seconds_bucket{instance=~"$instance"}[5m])) by (le, instance))'
+        legendFormat: "p50 - {{instance}}"
+
+  - title: "Upstream Response Time (99th, 95th, 50th percentile)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 10, w: 24, x: 0, y: 10 }
+    options:
+      unit: "seconds"
+    targets:
+      - expr: 'histogram_quantile(0.99, sum(rate(nginx_http_upstream_response_time_seconds_bucket{instance=~"$instance"}[5m])) by (le, instance))'
+        legendFormat: "p99 - {{instance}}"
+      - expr: 'histogram_quantile(0.95, sum(rate(nginx_http_upstream_response_time_seconds_bucket{instance=~"$instance"}[5m])) by (le, instance))'
+        legendFormat: "p95 - {{instance}}"
+      - expr: 'histogram_quantile(0.50, sum(rate(nginx_http_upstream_response_time_seconds_bucket{instance=~"$instance"}[5m])) by (le, instance))'
+        legendFormat: "p50 - {{instance}}"

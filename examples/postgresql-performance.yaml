@@ -1,0 +1,75 @@
+#
+# -----------------------------------------------------------------------------
+# postgresql-performance.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision de la performance pour PostgreSQL.
+#
+# Prérequis:
+#   - Un exportateur Prometheus pour PostgreSQL (`pg_exporter` ou similaire)
+#     doit être configuré et en cours d'exécution.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "PostgreSQL - Performance Tuning"
+  description: "Detailed performance monitoring for a PostgreSQL server."
+  tags: ['postgresql', 'database', 'autogen', 'performance']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(pg_up, instance)"
+    multi: true
+    includeAll: true
+  - name: "db"
+    label: "Database"
+    type: "query"
+    datasource: "Prometheus"
+    query: 'label_values(pg_stat_database_blks_read{instance=~"$instance"}, datname)'
+    multi: true
+    includeAll: true
+
+panels:
+  - title: "Index Hit Rate"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 0 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: '(sum(rate(pg_stat_database_idx_blks_hit{datname=~"$db", instance=~"$instance"}[5m])) / (sum(rate(pg_stat_database_idx_blks_hit{datname=~"$db", instance=~"$instance"}[5m])) + sum(rate(pg_stat_database_idx_blks_read{datname=~"$db", instance=~"$instance"}[5m])))) * 100'
+        legendFormat: "{{db}}"
+
+  - title: "Sequential Scans vs. Index Scans"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 0 }
+    targets:
+      - expr: 'rate(pg_stat_user_tables_seq_scan{datname=~"$db", instance=~"$instance"}[5m])'
+        legendFormat: "Sequential Scans"
+      - expr: 'rate(pg_stat_user_tables_idx_scan{datname=~"$db", instance=~"$instance"}[5m])'
+        legendFormat: "Index Scans"
+
+  - title: "Temporary File Usage"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 8 }
+    options:
+      unit: "bytes"
+    targets:
+      - expr: 'rate(pg_stat_database_temp_bytes{datname=~"$db", instance=~"$instance"}[5m])'
+        legendFormat: "{{db}}"
+
+  - title: "Deadlocks"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 8 }
+    targets:
+      - expr: 'rate(pg_stat_database_deadlocks{datname=~"$db", instance=~"$instance"}[5m])'
+        legendFormat: "{{db}}"

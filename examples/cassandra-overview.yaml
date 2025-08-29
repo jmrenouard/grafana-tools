@@ -1,0 +1,98 @@
+#
+# -----------------------------------------------------------------------------
+# cassandra-overview.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision pour un cluster Apache Cassandra.
+#
+# Prérequis:
+#   - Un exportateur Prometheus pour Cassandra (ex: `cassandra-exporter`)
+#     doit être configuré et en cours d'exécution pour chaque nœud.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "Cassandra Cluster Overview"
+  description: "Basic monitoring for a Cassandra cluster."
+  tags: ['cassandra', 'database', 'nosql', 'autogen']
+  timezone: "browser"
+
+templating:
+  - name: "cluster"
+    label: "Cluster"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(cassandra_node_up, cluster)"
+    multi: false
+    includeAll: false
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: 'label_values(cassandra_node_up{cluster="$cluster"}, instance)'
+    multi: true
+    includeAll: true
+
+panels:
+  # --- Statut du Cluster ---
+  - title: "Node Status (Up/Down)"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 8, x: 0, y: 0 }
+    targets:
+      - expr: 'sum(cassandra_node_up{cluster="$cluster"})'
+        legendFormat: "Up"
+      - expr: 'count(cassandra_node_up{cluster="$cluster"}) - sum(cassandra_node_up{cluster="$cluster"})'
+        legendFormat: "Down"
+
+  - title: "Node State (Normal/Joining/Leaving/Moving)"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 8, x: 8, y: 0 }
+    targets:
+      - expr: 'sum(cassandra_node_state{cluster="$cluster", state="NORMAL"})'
+        legendFormat: "Normal"
+      - expr: 'sum(cassandra_node_state{cluster="$cluster", state!="NORMAL"})'
+        legendFormat: "Other"
+
+  - title: "Heap Usage"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 8, x: 16, y: 0 }
+    options:
+      unit: "bytes"
+    targets:
+      - expr: 'avg(cassandra_jvm_memory_used_bytes{area="heap", instance=~"$instance"})'
+        legendFormat: "Avg Heap Used"
+
+  # --- Latence ---
+  - title: "Read Latency (99th percentile)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 4 }
+    options:
+      unit: "seconds"
+    targets:
+      - expr: 'cassandra_client_request_latency_seconds{quantile="0.99", request_type="read", instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  - title: "Write Latency (99th percentile)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 4 }
+    options:
+      unit: "seconds"
+    targets:
+      - expr: 'cassandra_client_request_latency_seconds{quantile="0.99", request_type="write", instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  # --- Tâches en attente ---
+  - title: "Pending Compactions"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 12 }
+    targets:
+      - expr: 'cassandra_compaction_pending_tasks{instance=~"$instance"}'
+        legendFormat: "{{instance}}"

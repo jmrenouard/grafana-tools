@@ -1,0 +1,97 @@
+#
+# -----------------------------------------------------------------------------
+# sql-app-metrics.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard d'exemple pour la supervision de métriques métier (applicatives)
+#   directement depuis une base de données SQL.
+#
+# Prérequis:
+#   - Une source de données Grafana de type PostgreSQL, MySQL ou MSSQL.
+#     Le nom de la source de données doit être "App SQL DB" ou modifié dans le
+#     fichier.
+#   - Les tables et colonnes utilisées dans les requêtes (ex: `orders`, `users`)
+#     doivent exister.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "Application Metrics (via SQL)"
+  description: "Monitoring of business/application metrics directly from a SQL database."
+  tags: ['sql', 'business-intelligence', 'application', 'autogen']
+  timezone: "browser"
+
+templating:
+  - name: "time_interval"
+    label: "Time Interval"
+    type: "interval"
+    query: "1m,5m,10m,30m,1h,6h,12h"
+    default: "5m"
+    auto: true
+
+panels:
+  # --- Métriques Clés ---
+  - title: "Total Sales (today)"
+    type: "stat"
+    datasource: "App SQL DB" # Remplacez par le nom de votre datasource SQL
+    gridPos: { h: 6, w: 8, x: 0, y: 0 }
+    targets:
+      - rawSql: |
+          SELECT SUM(amount)
+          FROM orders
+          WHERE created_at >= CURRENT_DATE
+        format: "table"
+
+  - title: "New Users (today)"
+    type: "stat"
+    datasource: "App SQL DB"
+    gridPos: { h: 6, w: 8, x: 8, y: 0 }
+    targets:
+      - rawSql: |
+          SELECT COUNT(id)
+          FROM users
+          WHERE created_at >= CURRENT_DATE
+        format: "table"
+
+  - title: "Average Order Value (today)"
+    type: "stat"
+    datasource: "App SQL DB"
+    gridPos: { h: 6, w: 8, x: 16, y: 0 }
+    targets:
+      - rawSql: |
+          SELECT AVG(amount)
+          FROM orders
+          WHERE created_at >= CURRENT_DATE
+        format: "table"
+
+  # --- Graphiques temporels ---
+  - title: "Sales Over Time"
+    type: "timeseries"
+    datasource: "App SQL DB"
+    gridPos: { h: 10, w: 24, x: 0, y: 6 }
+    targets:
+      - rawSql: |
+          SELECT
+            $__timeGroupAlias(created_at, $__interval),
+            SUM(amount) as "sales"
+          FROM orders
+          WHERE $__timeFilter(created_at)
+          GROUP BY 1
+          ORDER BY 1
+        format: "time_series"
+
+  - title: "User Registrations Over Time"
+    type: "timeseries"
+    datasource: "App SQL DB"
+    gridPos: { h: 10, w: 24, x: 0, y: 16 }
+    targets:
+      - rawSql: |
+          SELECT
+            $__timeGroupAlias(created_at, $__interval),
+            COUNT(id) as "new_users"
+          FROM users
+          WHERE $__timeFilter(created_at)
+          GROUP BY 1
+          ORDER BY 1
+        format: "time_series"

@@ -1,0 +1,97 @@
+#
+# -----------------------------------------------------------------------------
+# linux-overview.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision général pour un serveur Linux.
+#
+# Prérequis:
+#   - Un exportateur de nœuds Prometheus (`node_exporter`) doit être en cours
+#     d'exécution sur le serveur cible.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "Linux Server Overview"
+  description: "General monitoring for a Linux server, based on node_exporter."
+  tags: ['linux', 'node-exporter', 'autogen']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(node_uname_info, instance)"
+    multi: true
+    includeAll: true
+
+panels:
+  # --- Métriques Clés (Ligne du haut) ---
+  - title: "System Load (1 min avg)"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 4, x: 0, y: 0 }
+    targets:
+      - expr: 'node_load1{instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  - title: "Uptime"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 4, x: 4, y: 0 }
+    options:
+      unit: "seconds"
+    targets:
+      - expr: 'time() - node_boot_time_seconds{instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  - title: "Number of Processes"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 4, x: 8, y: 0 }
+    targets:
+      - expr: 'node_procs_running{instance=~"$instance"}'
+        legendFormat: "{{instance}} - Running"
+      - expr: 'node_procs_blocked{instance=~"$instance"}'
+        legendFormat: "{{instance}} - Blocked"
+
+  # --- CPU et Mémoire ---
+  - title: "CPU Usage (%)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 4 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: '100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle", instance=~"$instance"}[5m])) * 100)'
+        legendFormat: "Used on {{instance}}"
+
+  - title: "Memory Usage"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 4 }
+    options:
+      unit: "bytes"
+    targets:
+      - expr: 'node_memory_MemTotal_bytes{instance=~"$instance"} - node_memory_MemAvailable_bytes{instance=~"$instance"}'
+        legendFormat: "{{instance}} - Used"
+      - expr: 'node_memory_MemAvailable_bytes{instance=~"$instance"}'
+        legendFormat: "{{instance}} - Available"
+      - expr: 'node_memory_Buffers_bytes{instance=~"$instance"}'
+        legendFormat: "{{instance}} - Buffers"
+      - expr: 'node_memory_Cached_bytes{instance=~"$instance"}'
+        legendFormat: "{{instance}} - Cached"
+
+  # --- Espace Disque ---
+  - title: "Root Filesystem Usage (%)"
+    type: "gauge"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 12 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: '(1 - (node_filesystem_avail_bytes{mountpoint="/", fstype!="rootfs", instance=~"$instance"} / node_filesystem_size_bytes{mountpoint="/", fstype!="rootfs", instance=~"$instance"})) * 100'
+        legendFormat: "{{instance}} - /"

@@ -1,0 +1,82 @@
+#
+# -----------------------------------------------------------------------------
+# nginx-overview.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision pour un serveur web Nginx.
+#
+# Prérequis:
+#   - Le module `stub_status` de Nginx doit être activé.
+#   - Un exportateur Prometheus pour Nginx (`nginx-prometheus-exporter`) doit
+#     être configuré pour scraper la page de statut.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "Nginx Overview"
+  description: "Basic monitoring for an Nginx web server."
+  tags: ['nginx', 'web-server', 'autogen']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(nginx_up, instance)"
+    multi: true
+    includeAll: true
+
+panels:
+  # --- Métriques Clés ---
+  - title: "Server Status"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 6, x: 0, y: 0 }
+    targets:
+      - expr: 'nginx_up{instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  - title: "Active Connections"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 6, x: 6, y: 0 }
+    targets:
+      - expr: 'nginx_connections_active{instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  - title: "Requests per Second"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 6, x: 12, y: 0 }
+    targets:
+      - expr: 'sum(rate(nginx_requests_total[5m])) by (instance)'
+        legendFormat: "{{instance}}"
+
+  # --- Connexions ---
+  - title: "Connection Status"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 4 }
+    targets:
+      - expr: 'nginx_connections_active{instance=~"$instance"}'
+        legendFormat: "Active"
+      - expr: 'nginx_connections_reading{instance=~"$instance"}'
+        legendFormat: "Reading"
+      - expr: 'nginx_connections_writing{instance=~"$instance"}'
+        legendFormat: "Writing"
+      - expr: 'nginx_connections_waiting{instance=~"$instance"}'
+        legendFormat: "Waiting"
+
+  # --- Requêtes ---
+  - title: "Handled vs. Accepted Connections"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 12 }
+    targets:
+      - expr: 'rate(nginx_connections_accepted[5m])'
+        legendFormat: "Accepted"
+      - expr: 'rate(nginx_connections_handled[5m])'
+        legendFormat: "Handled"

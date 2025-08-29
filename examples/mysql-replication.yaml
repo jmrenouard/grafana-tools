@@ -1,0 +1,58 @@
+#
+# -----------------------------------------------------------------------------
+# mysql-replication.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision de la réplication MySQL/MariaDB.
+#
+# Prérequis:
+#   - Un exportateur Prometheus pour MySQL (`mysqld_exporter`) doit être
+#     configuré et en cours d'exécution sur les serveurs master et slave.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "MySQL/MariaDB - Replication Status"
+  description: "Monitoring for MySQL/MariaDB replication."
+  tags: ['mysql', 'mariadb', 'database', 'autogen', 'replication']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Slave Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(mysql_slave_status_master_server_id, instance)"
+    multi: true
+    includeAll: true
+
+panels:
+  - title: "Slave Running Status"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 6, w: 12, x: 0, y: 0 }
+    targets:
+      - expr: 'mysql_slave_status_slave_io_running{instance=~"$instance"}'
+        legendFormat: "IO Thread Running"
+      - expr: 'mysql_slave_status_slave_sql_running{instance=~"$instance"}'
+        legendFormat: "SQL Thread Running"
+
+  - title: "Replication Lag"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 10, w: 24, x: 0, y: 6 }
+    options:
+      unit: "seconds"
+    targets:
+      - expr: 'mysql_slave_status_seconds_behind_master{instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  - title: "Replication Errors"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 6, w: 12, x: 12, y: 0 }
+    targets:
+      - expr: 'mysql_slave_status_last_errno{instance=~"$instance"}'
+        legendFormat: "Last Error Number"

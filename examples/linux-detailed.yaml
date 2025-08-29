@@ -1,0 +1,97 @@
+#
+# -----------------------------------------------------------------------------
+# linux-detailed.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision détaillé pour un serveur Linux.
+#
+# Prérequis:
+#   - Un exportateur de nœuds Prometheus (`node_exporter`) doit être en cours
+#     d'exécution sur le serveur cible.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "Linux Server - Detailed View"
+  description: "Detailed monitoring for a Linux server, based on node_exporter."
+  tags: ['linux', 'node-exporter', 'autogen', 'detailed']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(node_uname_info, instance)"
+    multi: true
+    includeAll: true
+  - name: "device"
+    label: "Network Device"
+    type: "query"
+    datasource: "Prometheus"
+    query: 'label_values(node_network_receive_bytes_total{instance=~"$instance", device!~"lo"}, device)'
+    multi: true
+    includeAll: true
+
+panels:
+  # --- CPU ---
+  - title: "CPU Usage per Core"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 0 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: '100 - (avg by (instance, cpu) (rate(node_cpu_seconds_total{mode="idle", instance=~"$instance"}[5m])) * 100)'
+        legendFormat: "{{instance}} - CPU {{cpu}}"
+
+  # --- Mémoire ---
+  - title: "Swap Usage"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 8 }
+    options:
+      unit: "bytes"
+    targets:
+      - expr: 'node_memory_SwapTotal_bytes{instance=~"$instance"} - node_memory_SwapFree_bytes{instance=~"$instance"}'
+        legendFormat: "{{instance}} - Used"
+      - expr: 'node_memory_SwapFree_bytes{instance=~"$instance"}'
+        legendFormat: "{{instance}} - Free"
+
+  - title: "Memory Slab Allocation"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 8 }
+    options:
+      unit: "bytes"
+    targets:
+      - expr: 'node_memory_Slab_bytes{instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  # --- Réseau ---
+  - title: "Network Traffic (by device)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 16 }
+    options:
+      unit: "bytes"
+    targets:
+      - expr: 'rate(node_network_receive_bytes_total{instance=~"$instance", device=~"$device"}[5m])'
+        legendFormat: "{{instance}} - Ingress {{device}}"
+      - expr: 'rate(node_network_transmit_bytes_total{instance=~"$instance", device=~"$device"}[5m])'
+        legendFormat: "{{instance}} - Egress {{device}}"
+
+  # --- Disque ---
+  - title: "Disk I/O per Second (by device)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 24 }
+    options:
+      unit: "bytes"
+    targets:
+      - expr: 'rate(node_disk_read_bytes_total{instance=~"$instance"}[5m])'
+        legendFormat: "{{instance}} - Read {{device}}"
+      - expr: 'rate(node_disk_written_bytes_total{instance=~"$instance"}[5m])'
+        legendFormat: "{{instance}} - Write {{device}}"
