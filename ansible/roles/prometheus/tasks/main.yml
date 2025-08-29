@@ -1,0 +1,96 @@
+---
+- name: Include default variables
+  ansible.builtin.include_vars:
+    file: defaults/main.yml
+
+- name: Create a group for Prometheus
+  ansible.builtin.group:
+    name: prometheus
+    state: present
+
+- name: Create a user for Prometheus
+  ansible.builtin.user:
+    name: prometheus
+    group: prometheus
+    system: yes
+    shell: /bin/false
+    create_home: no
+
+- name: Create Prometheus config directory
+  ansible.builtin.file:
+    path: /etc/prometheus
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+
+- name: Create Prometheus data directory
+  ansible.builtin.file:
+    path: /var/lib/prometheus
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+
+- name: Download and unarchive Prometheus
+  ansible.builtin.unarchive:
+    src: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+    dest: /tmp/
+    remote_src: yes
+    creates: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/prometheus"
+
+- name: Copy prometheus binaries
+  ansible.builtin.copy:
+    src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
+    dest: /usr/local/bin/
+    remote_src: yes
+    mode: '0755'
+    owner: root
+    group: root
+  loop:
+    - prometheus
+    - promtool
+
+- name: Copy prometheus console libraries
+  ansible.builtin.copy:
+    src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
+    dest: /etc/prometheus/
+    remote_src: yes
+    owner: prometheus
+    group: prometheus
+  loop:
+    - console_libraries
+    - consoles
+
+- name: Template prometheus config file
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+  notify: restart prometheus
+
+- name: Template prometheus systemd service file
+  ansible.builtin.template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart prometheus
+
+- name: Ensure prometheus service is started and enabled
+  ansible.builtin.systemd:
+    name: prometheus
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Cleanup prometheus archive and directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/prometheus-{{ prometheus_version }}.linux-amd64"
+    - "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"

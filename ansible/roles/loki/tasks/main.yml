@@ -1,0 +1,87 @@
+---
+- name: Include default variables
+  ansible.builtin.include_vars:
+    file: defaults/main.yml
+
+- name: Create a group for Loki
+  ansible.builtin.group:
+    name: loki
+    state: present
+
+- name: Create a user for Loki
+  ansible.builtin.user:
+    name: loki
+    group: loki
+    system: yes
+    shell: /bin/false
+    create_home: no
+
+- name: Create Loki config directory
+  ansible.builtin.file:
+    path: /etc/loki
+    state: directory
+    owner: loki
+    group: loki
+    mode: '0755'
+
+- name: Create Loki data directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: loki
+    group: loki
+    mode: '0755'
+  loop:
+    - /tmp/loki/boltdb-shipper-active
+    - /tmp/loki/boltdb-shipper-cache
+    - /tmp/loki/chunks
+    - /tmp/loki/boltdb-shipper-compactor
+
+- name: Download and unarchive Loki
+  ansible.builtin.unarchive:
+    src: "https://github.com/grafana/loki/releases/download/v{{ loki_version }}/loki-linux-amd64.zip"
+    dest: /tmp/
+    remote_src: yes
+    creates: "/tmp/loki-linux-amd64"
+
+- name: Copy loki binary
+  ansible.builtin.copy:
+    src: "/tmp/loki-linux-amd64"
+    dest: /usr/local/bin/loki
+    remote_src: yes
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Template loki config file
+  ansible.builtin.template:
+    src: loki-config.yml.j2
+    dest: /etc/loki/loki-config.yml
+    owner: loki
+    group: loki
+    mode: '0644'
+  notify: restart loki
+
+- name: Template loki systemd service file
+  ansible.builtin.template:
+    src: loki.service.j2
+    dest: /etc/systemd/system/loki.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart loki
+
+- name: Ensure loki service is started and enabled
+  ansible.builtin.systemd:
+    name: loki
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Cleanup loki archive
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/loki-linux-amd64
+    - /tmp/loki-linux-amd64.zip

@@ -1,0 +1,10 @@
+---
+- name: Deploy Monitoring Stack
+  hosts: monitoring_servers
+  become: yes
+  roles:
+    - role: node_exporter
+    - role: metricbeat
+    - role: prometheus
+    - role: loki
+    - role: grafana
