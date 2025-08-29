@@ -1,8 +1,6 @@
 ---
-- name: Install Loki
-  apt:
-    name: loki
     state: present
+    update_cache: yes
   notify: restart loki
 
 - name: Start Loki service
