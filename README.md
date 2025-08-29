@@ -122,6 +122,26 @@ python3 grafana_helper.py --file examples/linux-overview.yaml --push
 
 Each file contains comments at the top describing its purpose and any prerequisites, such as the required Prometheus exporter.
 
+## Ansible for Monitoring Stack
+
+This project now includes a set of Ansible playbooks and roles to deploy a full monitoring stack, including Grafana, Prometheus, Loki, Node Exporter, and Metricbeat. This allows you to not only generate dashboards but also to set up the required infrastructure to run them.
+
+### Quick Start
+
+1.  **Install Ansible**: Ensure you have Ansible installed on your control machine.
+2.  **Create an Inventory**: Create an Ansible inventory file (e.g., `inventory.ini`) and define a `monitoring_servers` group with the hosts you want to target.
+3.  **Run the Playbook**:
+    ```bash
+    ansible-playbook -i inventory.ini ansible/playbooks/monitoring.yml
+    ```
+
+### Documentation
+
+For more detailed information on the playbook and roles, please see the documentation:
+
+-   [English Documentation](./ansible/doc/doc_monitoring.md)
+-   [French Documentation](./ansible/doc/doc_monitoring_fr.md)
+
 ## ✨ Extending the tool
 
 To add support for new panel types (e.g., `barchart`, `table`), simply modify the `create_panel` function in the `grafana_helper.py` script by adding a new `elif` condition.
