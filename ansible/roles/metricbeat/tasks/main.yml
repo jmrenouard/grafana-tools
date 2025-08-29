@@ -1,8 +1,6 @@
 ---
-- name: Install Metricbeat
-  apt:
-    name: metricbeat
     state: present
+    update_cache: yes
   notify: restart metricbeat
 
 - name: Start Metricbeat service
