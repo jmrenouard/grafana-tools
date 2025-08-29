@@ -1,8 +1,6 @@
 ---
-- name: Install Prometheus
-  apt:
-    name: prometheus
     state: present
+    update_cache: yes
   notify: restart prometheus
 
 - name: Start Prometheus service
