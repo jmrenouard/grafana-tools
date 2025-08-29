@@ -3,8 +3,3 @@
     update_cache: yes
   notify: restart prometheus
 
-- name: Start Prometheus service
-  service:
-    name: prometheus
-    state: started
-    enabled: yes
