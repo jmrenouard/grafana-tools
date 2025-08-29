@@ -34,6 +34,18 @@ docker run --rm \
   --file dashboard.yaml --push
 ```
 
+## Makefile Usage
+
+This project includes a `Makefile` to simplify common development tasks.
+
+-   `make help`: Shows a list of all available commands.
+-   `make install`: Installs the required Python dependencies.
+-   `make lint`: Runs a linter on the `grafana_helper.py` script.
+-   `make run file=<path>`: Generates a dashboard from a YAML file (e.g., `make run file=examples/app-sales-dashboard.yaml`).
+-   `make build`: Builds the Docker image.
+-   `make push`: Pushes the Docker image to Docker Hub (requires login).
+-   `make clean`: Removes temporary files.
+
 ## ⚙️ Configuration
 
 ### Environment Variables
