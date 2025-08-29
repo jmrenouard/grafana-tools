@@ -1,8 +1,6 @@
 ---
-- name: Install Node Exporter
-  apt:
-    name: prometheus-node-exporter
     state: present
+    update_cache: yes
   notify: restart node exporter
 
 - name: Start Node Exporter service
