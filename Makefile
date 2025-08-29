@@ -52,6 +52,5 @@ push: build
 	docker push ${IMAGE_NAME}:${VERSION}
 
 clean:
-	find . -type f -name "*.pyc" -delete
-	find . -type d -name "__pycache__" -exec rm -rf {} +
+	find . -name '*.pyc' -delete -o -name '__pycache__' -type d -exec rm -rf {} +
 	@echo "Cleaned up Python cache files."
