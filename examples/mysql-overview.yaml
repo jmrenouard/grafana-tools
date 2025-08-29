@@ -1,0 +1,89 @@
+#
+# -----------------------------------------------------------------------------
+# mysql-overview.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision pour une instance MySQL ou MariaDB.
+#
+# Prérequis:
+#   - Un exportateur Prometheus pour MySQL (`mysqld_exporter`) doit être
+#     configuré et en cours d'exécution.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "MySQL/MariaDB Overview"
+  description: "Basic monitoring for a MySQL/MariaDB server."
+  tags: ['mysql', 'mariadb', 'database', 'autogen']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(mysql_up, instance)"
+    multi: true
+    includeAll: true
+
+panels:
+  # --- Métriques Clés ---
+  - title: "Server Status"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 6, x: 0, y: 0 }
+    targets:
+      - expr: 'mysql_up{instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  - title: "Active Connections"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 6, x: 6, y: 0 }
+    targets:
+      - expr: 'mysql_global_status_threads_connected{instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  - title: "Uptime"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 6, x: 12, y: 0 }
+    options:
+      unit: "seconds"
+    targets:
+      - expr: 'mysql_global_status_uptime{instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  # --- Performance des Requêtes ---
+  - title: "Queries per Second"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 4 }
+    targets:
+      - expr: 'rate(mysql_global_status_queries[5m])'
+        legendFormat: "QPS on {{instance}}"
+
+  - title: "Slow Queries"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 4 }
+    targets:
+      - expr: 'rate(mysql_global_status_slow_queries[5m])'
+        legendFormat: "Slow queries on {{instance}}"
+
+  # --- Utilisation du Buffer Pool InnoDB ---
+  - title: "InnoDB Buffer Pool Usage"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 12 }
+    options:
+      unit: "bytes"
+    targets:
+      - expr: 'mysql_global_status_innodb_buffer_pool_pages_total{instance=~"$instance"} * mysql_global_status_innodb_page_size{instance=~"$instance"}'
+        legendFormat: "{{instance}} - Total"
+      - expr: 'mysql_global_status_innodb_buffer_pool_pages_free{instance=~"$instance"} * mysql_global_status_innodb_page_size{instance=~"$instance"}'
+        legendFormat: "{{instance}} - Free"
+      - expr: 'mysql_global_status_innodb_buffer_pool_pages_data{instance=~"$instance"} * mysql_global_status_innodb_page_size{instance=~"$instance"}'
+        legendFormat: "{{instance}} - Used"

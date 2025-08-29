@@ -1,0 +1,96 @@
+#
+# -----------------------------------------------------------------------------
+# postgresql-overview.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision pour une instance PostgreSQL.
+#
+# Prérequis:
+#   - Un exportateur Prometheus pour PostgreSQL (`pg_exporter` ou similaire)
+#     doit être configuré et en cours d'exécution.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "PostgreSQL Overview"
+  description: "Basic monitoring for a PostgreSQL server."
+  tags: ['postgresql', 'database', 'autogen']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(pg_up, instance)"
+    multi: true
+    includeAll: true
+  - name: "db"
+    label: "Database"
+    type: "query"
+    datasource: "Prometheus"
+    query: 'label_values(pg_stat_database_blks_read{instance=~"$instance"}, datname)'
+    multi: true
+    includeAll: true
+
+panels:
+  # --- Métriques Clés ---
+  - title: "Server Status"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 6, x: 0, y: 0 }
+    targets:
+      - expr: 'pg_up{instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  - title: "Active Connections"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 6, x: 6, y: 0 }
+    targets:
+      - expr: 'sum(pg_stat_activity_count{datname=~"$db", instance=~"$instance"})'
+        legendFormat: "Total"
+
+  - title: "Uptime"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 6, x: 12, y: 0 }
+    options:
+      unit: "seconds"
+    targets:
+      - expr: 'time() - pg_postmaster_start_time_seconds{instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  # --- Transactions et Performance ---
+  - title: "Transactions per Second"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 4 }
+    targets:
+      - expr: 'rate(pg_stat_database_xact_commit{datname=~"$db", instance=~"$instance"}[5m])'
+        legendFormat: "Commits on {{db}}"
+      - expr: 'rate(pg_stat_database_xact_rollback{datname=~"$db", instance=~"$instance"}[5m])'
+        legendFormat: "Rollbacks on {{db}}"
+
+  - title: "Block Cache Hit Rate (%)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 4 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: 'sum(rate(pg_stat_database_blks_hit{datname=~"$db", instance=~"$instance"}[5m])) / (sum(rate(pg_stat_database_blks_hit{datname=~"$db", instance=~"$instance"}[5m])) + sum(rate(pg_stat_database_blks_read{datname=~"$db", instance=~"$instance"}[5m]))) * 100'
+        legendFormat: "Hit Rate on {{db}}"
+
+  # --- Taille de la base de données ---
+  - title: "Database Size"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 12 }
+    options:
+      unit: "bytes"
+    targets:
+      - expr: 'pg_database_size_bytes{datname=~"$db", instance=~"$instance"}'
+        legendFormat: "{{db}}"

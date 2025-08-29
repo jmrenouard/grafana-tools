@@ -1,0 +1,86 @@
+#
+# -----------------------------------------------------------------------------
+# app-sales-dashboard.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard pour la supervision des métriques de vente d'une application
+#   de e-commerce.
+#
+# Prérequis:
+#   - Une application qui expose des métriques Prometheus sur les ventes
+#     (ex: `app_sales_total`, `app_new_customers_total`).
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "E-commerce Sales Dashboard"
+  description: "Monitoring for a sales/e-commerce application."
+  tags: ['application', 'sales', 'ecommerce', 'autogen']
+  timezone: "browser"
+
+templating:
+  - name: "region"
+    label: "Region"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(app_sales_total, region)"
+    multi: true
+    includeAll: true
+  - name: "product_category"
+    label: "Product Category"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(app_sales_total, category)"
+    multi: true
+    includeAll: true
+
+panels:
+  - title: "Total Revenue"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 6, w: 8, x: 0, y: 0 }
+    targets:
+      - expr: 'sum(app_sales_total{region=~"$region", category=~"$product_category"})'
+        legendFormat: "Total Revenue"
+
+  - title: "New Customers"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 6, w: 8, x: 8, y: 0 }
+    targets:
+      - expr: 'sum(app_new_customers_total{region=~"$region"})'
+        legendFormat: "New Customers"
+
+  - title: "Average Order Value"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 6, w: 8, x: 16, y: 0 }
+    targets:
+      - expr: 'sum(app_sales_total{region=~"$region", category=~"$product_category"}) / sum(app_orders_total{region=~"$region", category=~"$product_category"})'
+        legendFormat: "AOV"
+
+  - title: "Revenue by Region"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 10, w: 12, x: 0, y: 6 }
+    targets:
+      - expr: 'sum(rate(app_sales_total{region=~"$region"}[5m])) by (region)'
+        legendFormat: "{{region}}"
+
+  - title: "Revenue by Product Category"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 10, w: 12, x: 12, y: 6 }
+    targets:
+      - expr: 'sum(rate(app_sales_total{category=~"$product_category"}[5m])) by (category)'
+        legendFormat: "{{category}}"
+
+  - title: "Top 5 Products by Revenue"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 10, w: 24, x: 0, y: 16 }
+    targets:
+      - expr: 'topk(5, sum(rate(app_sales_total[1h])) by (product_sku))'
+        legendFormat: "{{product_sku}}"

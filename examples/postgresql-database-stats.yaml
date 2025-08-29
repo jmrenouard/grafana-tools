@@ -1,0 +1,79 @@
+#
+# -----------------------------------------------------------------------------
+# postgresql-database-stats.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision des statistiques par base de données pour PostgreSQL.
+#
+# Prérequis:
+#   - Un exportateur Prometheus pour PostgreSQL (`pg_exporter` ou similaire)
+#     doit être configuré et en cours d'exécution.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "PostgreSQL - Per-Database Stats"
+  description: "Per-database statistics for a PostgreSQL server."
+  tags: ['postgresql', 'database', 'autogen', 'stats']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(pg_up, instance)"
+    multi: true
+    includeAll: true
+  - name: "db"
+    label: "Database"
+    type: "query"
+    datasource: "Prometheus"
+    query: 'label_values(pg_stat_database_blks_read{instance=~"$instance"}, datname)'
+    multi: true
+    includeAll: true
+
+panels:
+  - title: "Database Size"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 8, x: 0, y: 0 }
+    options:
+      unit: "bytes"
+    targets:
+      - expr: 'pg_database_size_bytes{datname=~"$db", instance=~"$instance"}'
+        legendFormat: "{{db}}"
+
+  - title: "Transaction Rate"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 8, x: 8, y: 0 }
+    targets:
+      - expr: 'rate(pg_stat_database_xact_commit{datname=~"$db", instance=~"$instance"}[5m]) + rate(pg_stat_database_xact_rollback{datname=~"$db", instance=~"$instance"}[5m])'
+        legendFormat: "{{db}} TPS"
+
+  - title: "Cache Hit Rate"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 8, x: 16, y: 0 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: 'sum(rate(pg_stat_database_blks_hit{datname=~"$db", instance=~"$instance"}[5m])) / (sum(rate(pg_stat_database_blks_hit{datname=~"$db", instance=~"$instance"}[5m])) + sum(rate(pg_stat_database_blks_read{datname=~"$db", instance=~"$instance"}[5m]))) * 100'
+        legendFormat: "{{db}}"
+
+  - title: "Rows Fetched vs. Inserted/Updated/Deleted"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 10, w: 24, x: 0, y: 8 }
+    targets:
+      - expr: 'rate(pg_stat_database_tup_fetched{datname=~"$db", instance=~"$instance"}[5m])'
+        legendFormat: "{{db}} - Fetched"
+      - expr: 'rate(pg_stat_database_tup_inserted{datname=~"$db", instance=~"$instance"}[5m])'
+        legendFormat: "{{db}} - Inserted"
+      - expr: 'rate(pg_stat_database_tup_updated{datname=~"$db", instance=~"$instance"}[5m])'
+        legendFormat: "{{db}} - Updated"
+      - expr: 'rate(pg_stat_database_tup_deleted{datname=~"$db", instance=~"$instance"}[5m])'
+        legendFormat: "{{db}} - Deleted"

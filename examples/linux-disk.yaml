@@ -1,0 +1,79 @@
+#
+# -----------------------------------------------------------------------------
+# linux-disk.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision dédié au disque pour un serveur Linux.
+#
+# Prérequis:
+#   - Un exportateur de nœuds Prometheus (`node_exporter`) doit être en cours
+#     d'exécution sur le serveur cible.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "Linux Server - Disk Focus"
+  description: "Dedicated disk monitoring for a Linux server."
+  tags: ['linux', 'node-exporter', 'autogen', 'disk']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(node_uname_info, instance)"
+    multi: true
+    includeAll: true
+  - name: "mountpoint"
+    label: "Mount Point"
+    type: "query"
+    datasource: "Prometheus"
+    query: 'label_values(node_filesystem_size_bytes{instance=~"$instance", fstype!="rootfs"}, mountpoint)'
+    multi: true
+    includeAll: true
+
+panels:
+  - title: "Filesystem Usage (%)"
+    type: "gauge"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 0 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: '(1 - (node_filesystem_avail_bytes{mountpoint=~"$mountpoint", instance=~"$instance"} / node_filesystem_size_bytes{mountpoint=~"$mountpoint", instance=~"$instance"})) * 100'
+        legendFormat: "{{instance}} - {{mountpoint}}"
+
+  - title: "Disk I/O Operations per Second"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 8 }
+    targets:
+      - expr: 'rate(node_disk_reads_completed_total{instance=~"$instance"}[5m])'
+        legendFormat: "{{instance}} - Reads"
+      - expr: 'rate(node_disk_writes_completed_total{instance=~"$instance"}[5m])'
+        legendFormat: "{{instance}} - Writes"
+
+  - title: "Disk I/O Throughput (bytes/sec)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 8 }
+    options:
+      unit: "bytes"
+    targets:
+      - expr: 'rate(node_disk_read_bytes_total{instance=~"$instance"}[5m])'
+        legendFormat: "{{instance}} - Read"
+      - expr: 'rate(node_disk_written_bytes_total{instance=~"$instance"}[5m])'
+        legendFormat: "{{instance}} - Written"
+
+  - title: "Inode Usage (%)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 16 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: '(1 - (node_filesystem_files_free{mountpoint=~"$mountpoint", instance=~"$instance"} / node_filesystem_files{mountpoint=~"$mountpoint", instance=~"$instance"})) * 100'
+        legendFormat: "{{instance}} - {{mountpoint}}"

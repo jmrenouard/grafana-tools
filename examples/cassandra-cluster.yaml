@@ -1,0 +1,76 @@
+#
+# -----------------------------------------------------------------------------
+# cassandra-cluster.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision détaillé pour un cluster Apache Cassandra.
+#
+# Prérequis:
+#   - Un exportateur Prometheus pour Cassandra (ex: `cassandra-exporter`)
+#     doit être configuré et en cours d'exécution pour chaque nœud.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "Cassandra - Detailed Cluster View"
+  description: "Detailed monitoring for a Cassandra cluster."
+  tags: ['cassandra', 'database', 'nosql', 'autogen', 'detailed']
+  timezone: "browser"
+
+templating:
+  - name: "cluster"
+    label: "Cluster"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(cassandra_node_up, cluster)"
+    multi: false
+  - name: "keyspace"
+    label: "Keyspace"
+    type: "query"
+    datasource: "Prometheus"
+    query: 'label_values(cassandra_table_live_sstables, cluster="$cluster")'
+    multi: true
+    includeAll: true
+
+panels:
+  - title: "Read/Write Latency per Keyspace (99th percentile)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 10, w: 24, x: 0, y: 0 }
+    options:
+      unit: "seconds"
+    targets:
+      - expr: 'cassandra_keyspace_read_latency_seconds{quantile="0.99", cluster="$cluster", keyspace=~"$keyspace"}'
+        legendFormat: "Read - {{keyspace}}"
+      - expr: 'cassandra_keyspace_write_latency_seconds{quantile="0.99", cluster="$cluster", keyspace=~"$keyspace"}'
+        legendFormat: "Write - {{keyspace}}"
+
+  - title: "Key Cache Hit Rate"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 10 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: 'cassandra_cache_hit_rate{cache="KeyCache", cluster="$cluster"}'
+        legendFormat: "Hit Rate"
+
+  - title: "Row Cache Hit Rate"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 10 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: 'cassandra_cache_hit_rate{cache="RowCache", cluster="$cluster"}'
+        legendFormat: "Hit Rate"
+
+  - title: "Live SSTables per Table"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 18 }
+    targets:
+      - expr: 'cassandra_table_live_sstables{cluster="$cluster", keyspace=~"$keyspace"}'
+        legendFormat: "{{keyspace}} - {{table}}"

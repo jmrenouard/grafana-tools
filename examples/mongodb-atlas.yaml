@@ -1,0 +1,74 @@
+#
+# -----------------------------------------------------------------------------
+# mongodb-atlas.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision pour un cluster MongoDB Atlas.
+#
+# Prérequis:
+#   - L'intégration Prometheus pour MongoDB Atlas doit être activée.
+#   - Une source de données Prometheus configurée dans Grafana pour scraper
+#     l'endpoint d'Atlas.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "MongoDB Atlas Cluster"
+  description: "Monitoring for a MongoDB Atlas cluster."
+  tags: ['mongodb', 'atlas', 'database', 'nosql', 'autogen']
+  timezone: "browser"
+
+templating:
+  - name: "project"
+    label: "Project"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(mongodb_atlas_disk_partition_iops_read_avg, project)"
+    multi: false
+  - name: "cluster"
+    label: "Cluster"
+    type: "query"
+    datasource: "Prometheus"
+    query: 'label_values(mongodb_atlas_disk_partition_iops_read_avg{project="$project"}, cluster_name)'
+    multi: true
+    includeAll: true
+
+panels:
+  - title: "Disk IOPS (Read/Write)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 0 }
+    targets:
+      - expr: 'mongodb_atlas_disk_partition_iops_read_avg{project="$project", cluster_name=~"$cluster"}'
+        legendFormat: "Read IOPS - {{cluster_name}}"
+      - expr: 'mongodb_atlas_disk_partition_iops_write_avg{project="$project", cluster_name=~"$cluster"}'
+        legendFormat: "Write IOPS - {{cluster_name}}"
+
+  - title: "Cache Usage"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 0 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: 'mongodb_atlas_cache_used_percent_avg{project="$project", cluster_name=~"$cluster"}'
+        legendFormat: "Used - {{cluster_name}}"
+      - expr: 'mongodb_atlas_cache_dirty_percent_avg{project="$project", cluster_name=~"$cluster"}'
+        legendFormat: "Dirty - {{cluster_name}}"
+
+  - title: "Command Rate"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 8 }
+    targets:
+      - expr: 'rate(mongodb_atlas_commands_total{project="$project", cluster_name=~"$cluster"}[5m])'
+        legendFormat: "{{command}} on {{cluster_name}}"
+
+  - title: "Query Targeting Scanned Objects per Returned"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 16 }
+    targets:
+      - expr: 'mongodb_atlas_query_targeting_scanned_objects_per_returned_avg{project="$project", cluster_name=~"$cluster"}'
+        legendFormat: "{{cluster_name}}"

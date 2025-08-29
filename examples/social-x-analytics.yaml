@@ -1,0 +1,79 @@
+#
+# -----------------------------------------------------------------------------
+# social-x-analytics.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard pour la supervision d'une application interne qui interagit
+#   avec l'API de X (anciennement Twitter).
+#
+# Prérequis:
+#   - Une application qui expose des métriques Prometheus sur son activité
+#     liée à X (ex: `app_x_api_requests_total`).
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "Social Media Analytics - X (Twitter)"
+  description: "Monitoring for an application that uses the X (Twitter) API."
+  tags: ['social-media', 'x', 'twitter', 'application', 'autogen']
+  timezone: "browser"
+
+templating:
+  - name: "job"
+    label: "Job"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(up{job=~\"x-app.*\"}, job)"
+    multi: true
+    includeAll: true
+
+panels:
+  # --- Métriques Clés de l'API ---
+  - title: "API Request Rate (per endpoint)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 0 }
+    targets:
+      - expr: 'sum(rate(app_x_api_requests_total{job=~"$job"}[5m])) by (endpoint)'
+        legendFormat: "{{endpoint}}"
+
+  - title: "API Request Latency (95th percentile)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 8 }
+    options:
+      unit: "seconds"
+    targets:
+      - expr: 'histogram_quantile(0.95, sum(rate(app_x_api_latency_seconds_bucket{job=~"$job"}[5m])) by (le, endpoint))'
+        legendFormat: "p95 latency - {{endpoint}}"
+
+  - title: "API Error Rate (%)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 8 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: 'sum(rate(app_x_api_requests_total{job=~"$job", status_code=~"5.."}[5m])) / sum(rate(app_x_api_requests_total{job=~"$job"}[5m])) * 100'
+        legendFormat: "Server Errors (5xx)"
+      - expr: 'sum(rate(app_x_api_requests_total{job=~"$job", status_code=~"4.."}[5m])) / sum(rate(app_x_api_requests_total{job=~"$job"}[5m])) * 100'
+        legendFormat: "Client Errors (4xx)"
+
+  # --- Métriques Métier ---
+  - title: "Tweets Processed per Second"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 16 }
+    targets:
+      - expr: 'rate(app_x_tweets_processed_total{job=~"$job"}[5m])'
+        legendFormat: "Tweets/sec"
+
+  - title: "User Lookups per Second"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 16 }
+    targets:
+      - expr: 'rate(app_x_user_lookups_total{job=~"$job"}[5m])'
+        legendFormat: "Lookups/sec"

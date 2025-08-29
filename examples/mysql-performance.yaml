@@ -1,0 +1,68 @@
+#
+# -----------------------------------------------------------------------------
+# mysql-performance.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision de la performance pour MySQL/MariaDB.
+#
+# Prérequis:
+#   - Un exportateur Prometheus pour MySQL (`mysqld_exporter`) doit être
+#     configuré et en cours d'exécution.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "MySQL/MariaDB - Performance Tuning"
+  description: "Detailed performance monitoring for a MySQL/MariaDB server."
+  tags: ['mysql', 'mariadb', 'database', 'autogen', 'performance']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(mysql_up, instance)"
+    multi: true
+    includeAll: true
+
+panels:
+  - title: "InnoDB Buffer Pool Hit Rate"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 0 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: '(1 - (mysql_global_status_innodb_buffer_pool_reads / mysql_global_status_innodb_buffer_pool_read_requests)) * 100'
+        legendFormat: "{{instance}}"
+
+  - title: "Query Cache Hit Rate"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 0 }
+    options:
+      unit: "percent"
+    targets:
+      - expr: '(mysql_global_status_qcache_hits / (mysql_global_status_qcache_hits + mysql_global_status_qcache_inserts)) * 100'
+        legendFormat: "{{instance}}"
+
+  - title: "Temporary Tables on Disk"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 0, y: 8 }
+    targets:
+      - expr: 'rate(mysql_global_status_created_tmp_disk_tables[5m])'
+        legendFormat: "{{instance}}"
+
+  - title: "Table Locks"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 12, x: 12, y: 8 }
+    targets:
+      - expr: 'rate(mysql_global_status_table_locks_waited[5m])'
+        legendFormat: "{{instance}} - Waited"
+      - expr: 'rate(mysql_global_status_table_locks_immediate[5m])'
+        legendFormat: "{{instance}} - Immediate"

@@ -1,0 +1,95 @@
+#
+# -----------------------------------------------------------------------------
+# mongodb-overview.yaml
+# -----------------------------------------------------------------------------
+#
+# Description:
+#   Dashboard de supervision pour une instance ou un cluster MongoDB.
+#
+# Prérequis:
+#   - Un exportateur Prometheus pour MongoDB (`mongodb_exporter`) doit être
+#     configuré et en cours d'exécution.
+#   - Une source de données Prometheus configurée dans Grafana.
+#
+# -----------------------------------------------------------------------------
+
+dashboard:
+  title: "MongoDB Overview"
+  description: "Basic monitoring for a MongoDB server."
+  tags: ['mongodb', 'database', 'nosql', 'autogen']
+  timezone: "browser"
+
+templating:
+  - name: "instance"
+    label: "Instance"
+    type: "query"
+    datasource: "Prometheus"
+    query: "label_values(mongodb_up, instance)"
+    multi: true
+    includeAll: true
+
+panels:
+  # --- Métriques Clés ---
+  - title: "Server Status"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 6, x: 0, y: 0 }
+    targets:
+      - expr: 'mongodb_up{instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  - title: "Connections"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 6, x: 6, y: 0 }
+    targets:
+      - expr: 'mongodb_ss_connections{type="current", instance=~"$instance"}'
+        legendFormat: "Current"
+      - expr: 'mongodb_ss_connections{type="available", instance=~"$instance"}'
+        legendFormat: "Available"
+
+  - title: "Uptime"
+    type: "stat"
+    datasource: "Prometheus"
+    gridPos: { h: 4, w: 6, x: 12, y: 0 }
+    options:
+      unit: "seconds"
+    targets:
+      - expr: 'mongodb_instance_uptime_seconds{instance=~"$instance"}'
+        legendFormat: "{{instance}}"
+
+  # --- Opérations ---
+  - title: "Operations per Second"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 4 }
+    targets:
+      - expr: 'rate(mongodb_ss_opcounters_total{type="query", instance=~"$instance"}[5m])'
+        legendFormat: "Query"
+      - expr: 'rate(mongodb_ss_opcounters_total{type="insert", instance=~"$instance"}[5m])'
+        legendFormat: "Insert"
+      - expr: 'rate(mongodb_ss_opcounters_total{type="update", instance=~"$instance"}[5m])'
+        legendFormat: "Update"
+      - expr: 'rate(mongodb_ss_opcounters_total{type="delete", instance=~"$instance"}[5m])'
+        legendFormat: "Delete"
+      - expr: 'rate(mongodb_ss_opcounters_total{type="getmore", instance=~"$instance"}[5m])'
+        legendFormat: "GetMore"
+      - expr: 'rate(mongodb_ss_opcounters_total{type="command", instance=~"$instance"}[5m])'
+        legendFormat: "Command"
+
+  # --- Utilisation Mémoire ---
+  - title: "Memory Usage (WiredTiger)"
+    type: "timeseries"
+    datasource: "Prometheus"
+    gridPos: { h: 8, w: 24, x: 0, y: 12 }
+    options:
+      unit: "bytes"
+    targets:
+      - expr: 'mongodb_ss_mem_resident{instance=~"$instance"}'
+        legendFormat: "Resident"
+      - expr: 'mongodb_ss_mem_virtual{instance=~"$instance"}'
+        legendFormat: "Virtual"
+      - expr: 'mongodb_ss_wiredtiger_cache_bytes{type="used", instance=~"$instance"}'
+        legendFormat: "Cache Used"
+      - expr: 'mongodb_ss_wiredtiger_cache_bytes{type="dirty", instance=~"$instance"}'
+        legendFormat: "Cache Dirty"

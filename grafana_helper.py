@@ -43,6 +43,7 @@ from grafanalib.core import (
     TimeSeries, Stat, GaugePanel, BarGauge,
     SECONDS_FORMAT, BYTES_FORMAT, PERCENT_FORMAT
 )
+from grafanalib._gen import DashboardEncoder
 
 # --- Mapping des unités pour une utilisation simple dans le YAML ---
 UNIT_FORMATS = {
@@ -91,7 +92,7 @@ def create_panel(panel_config):
             dataSource=datasource,
             targets=targets,
             gridPos=panel_grid_pos,
-            unit=UNIT_FORMATS.get(options.get('unit'))
+            unit=UNIT_FORMATS.get(options.get('unit'), '')
         )
     elif panel_type == 'stat':
         panel = Stat(
@@ -99,7 +100,7 @@ def create_panel(panel_config):
             dataSource=datasource,
             targets=targets,
             gridPos=panel_grid_pos,
-            unit=UNIT_FORMATS.get(options.get('unit'))
+            format=UNIT_FORMATS.get(options.get('unit'), 'none')
         )
     elif panel_type == 'gauge':
         panel = GaugePanel(
@@ -107,7 +108,7 @@ def create_panel(panel_config):
             dataSource=datasource,
             targets=targets,
             gridPos=panel_grid_pos,
-            unit=UNIT_FORMATS.get(options.get('unit'))
+            format=UNIT_FORMATS.get(options.get('unit'), 'none')
         )
     # Ajoutez d'autres types de panneaux ici (elif panel_type == '...':)
     else:
@@ -231,7 +232,7 @@ def main():
         },
         sort_keys=True,
         indent=2,
-        cls=Dashboard.JSONEncoder,
+        cls=DashboardEncoder,
     )
 
     # --- Actions en fonction des arguments ---
