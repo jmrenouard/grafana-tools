@@ -1,0 +1,12 @@
+---
+- name: Install Loki
+  apt:
+    name: loki
+    state: present
+  notify: restart loki
+
+- name: Start Loki service
+  service:
+    name: loki
+    state: started
+    enabled: yes

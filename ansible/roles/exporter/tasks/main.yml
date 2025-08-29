@@ -1,0 +1,12 @@
+---
+- name: Install Node Exporter
+  apt:
+    name: prometheus-node-exporter
+    state: present
+  notify: restart node exporter
+
+- name: Start Node Exporter service
+  service:
+    name: prometheus-node-exporter
+    state: started
+    enabled: yes

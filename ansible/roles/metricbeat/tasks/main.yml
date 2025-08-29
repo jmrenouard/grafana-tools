@@ -1,0 +1,12 @@
+---
+- name: Install Metricbeat
+  apt:
+    name: metricbeat
+    state: present
+  notify: restart metricbeat
+
+- name: Start Metricbeat service
+  service:
+    name: metricbeat
+    state: started
+    enabled: yes
