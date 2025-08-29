@@ -1,6 +1,6 @@
-[!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
-
 # Grafana Dashboard Generator
+
+[!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
 This project provides a command-line tool to generate and publish Grafana dashboards from simple YAML configuration files.
 
