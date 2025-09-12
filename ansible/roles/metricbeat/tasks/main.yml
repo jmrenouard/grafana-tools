@@ -21,9 +21,9 @@
 
 - name: Add Elastic repository
   ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/etc/apt/keyrings/elastic.gpg] https://artifacts.elastic.co/packages/9.x/apt stable main"
+    repo: "deb [signed-by=/etc/apt/keyrings/elastic.gpg] https://artifacts.elastic.co/packages/{{ metricbeat_version.split('.')[0] }}.x/apt stable main"
     state: present
-    filename: elastic-9.x
+    filename: elastic-{{ metricbeat_version.split('.')[0] }}.x
 
 - name: Install Metricbeat
   ansible.builtin.apt:

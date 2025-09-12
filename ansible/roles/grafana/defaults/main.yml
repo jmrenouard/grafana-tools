@@ -1,0 +1,11 @@
+---
+grafana_version: "8.5.3"
+grafana_config_file: /etc/grafana/grafana.ini
+grafana_data_dir: /var/lib/grafana
+grafana_logs_dir: /var/log/grafana
+grafana_user: grafana
+grafana_group: grafana
+prometheus_datasource_name: Prometheus
+prometheus_datasource_url: http://localhost:9090
+loki_datasource_name: Loki
+loki_datasource_url: http://localhost:3100
