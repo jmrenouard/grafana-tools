@@ -5,13 +5,13 @@
 
 - name: Create a group for node_exporter
   ansible.builtin.group:
-    name: node_exporter
+    name: "{{ node_exporter_group }}"
     state: present
 
 - name: Create a user for node_exporter
   ansible.builtin.user:
-    name: node_exporter
-    group: node_exporter
+    name: "{{ node_exporter_user }}"
+    group: "{{ node_exporter_group }}"
     system: yes
     shell: /bin/false
     create_home: no
@@ -26,7 +26,7 @@
 - name: Copy node_exporter binary
   ansible.builtin.copy:
     src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
-    dest: /usr/local/bin/
+    dest: "{{ node_exporter_bin_dir }}/"
     remote_src: yes
     mode: '0755'
     owner: root
@@ -35,7 +35,7 @@
 - name: Template node_exporter systemd service file
   ansible.builtin.template:
     src: node_exporter.service.j2
-    dest: /etc/systemd/system/node_exporter.service
+    dest: "{{ node_exporter_service_file }}"
     owner: root
     group: root
     mode: '0644'
