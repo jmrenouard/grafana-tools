@@ -25,7 +25,7 @@ run:
 	  --publish=8080:8080 \
 	  --detach=true \
 	  --name=$(CONTAINER_NAME) \
-	  gcr.io/cadvisor/cadvisor:latest
+	  $(IMAGE_NAME)
 
 # Stop and remove the Docker container
 stop:
