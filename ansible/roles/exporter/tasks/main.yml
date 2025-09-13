@@ -4,7 +4,7 @@
   notify: restart node exporter
 
 - name: Start Node Exporter service
-  service:
+  ansible.builtin.service:
     name: prometheus-node-exporter
     state: started
     enabled: yes
