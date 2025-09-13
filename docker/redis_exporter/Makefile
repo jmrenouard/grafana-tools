@@ -1,0 +1,30 @@
+# Makefile for redis-exporter
+
+# Environment variables
+include .env
+
+# Docker image name
+IMAGE_NAME := redis-exporter
+CONTAINER_NAME := redis-exporter
+
+# Default target
+all: build
+
+# Build the Docker image
+build:
+	docker build -t $(IMAGE_NAME) .
+
+# Run the Docker container
+run:
+	docker run -d --name $(CONTAINER_NAME) --env-file .env -p 9121:9121 $(IMAGE_NAME)
+
+# Stop and remove the Docker container
+stop:
+	docker stop $(CONTAINER_NAME) || true
+	docker rm $(CONTAINER_NAME) || true
+
+# View the container logs
+logs:
+	docker logs -f $(CONTAINER_NAME)
+
+.PHONY: all build run stop logs
