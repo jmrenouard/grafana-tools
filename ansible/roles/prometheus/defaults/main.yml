@@ -1,0 +1,9 @@
+---
+prometheus_version: "3.5.0"
+prometheus_user: prometheus
+prometheus_group: prometheus
+prometheus_config_dir: /etc/prometheus
+prometheus_data_dir: /var/lib/prometheus
+prometheus_bin_dir: /usr/local/bin
+prometheus_config_file: "{{ prometheus_config_dir }}/prometheus.yml"
+prometheus_service_file: /etc/systemd/system/prometheus.service

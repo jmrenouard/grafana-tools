@@ -1,0 +1,9 @@
+---
+loki_version: "3.5.3"
+loki_user: loki
+loki_group: loki
+loki_config_dir: /etc/loki
+loki_data_dir: /var/lib/loki
+loki_bin_dir: /usr/local/bin
+loki_config_file: "{{ loki_config_dir }}/loki-config.yml"
+loki_service_file: /etc/systemd/system/loki.service

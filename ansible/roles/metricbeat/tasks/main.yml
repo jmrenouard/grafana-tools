@@ -1,10 +1,48 @@
 ---
+- name: Install prerequisite packages
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
     state: present
     update_cache: yes
+
+- name: Create keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download Elastic GPG key
+  ansible.builtin.get_url:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    dest: /etc/apt/keyrings/elastic.gpg
+    mode: '0644'
+    force: no
+
+- name: Add Elastic repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/elastic.gpg] https://artifacts.elastic.co/packages/{{ metricbeat_version.split('.')[0] }}.x/apt stable main"
+    state: present
+    filename: elastic-{{ metricbeat_version.split('.')[0] }}.x
+
+- name: Install Metricbeat
+  ansible.builtin.apt:
+    name: metricbeat
+    state: present
+    update_cache: yes
+
+- name: Template metricbeat config file
+  ansible.builtin.template:
+    src: metricbeat.yml.j2
+    dest: /etc/metricbeat/metricbeat.yml
+    owner: root
+    group: root
+    mode: '0644'
   notify: restart metricbeat
 
-- name: Start Metricbeat service
-  service:
+- name: Ensure metricbeat service is started and enabled
+  ansible.builtin.systemd:
     name: metricbeat
     state: started
     enabled: yes
+    daemon_reload: yes

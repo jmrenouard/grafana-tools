@@ -1,0 +1,57 @@
+---
+- name: Include default variables
+  ansible.builtin.include_vars:
+    file: defaults/main.yml
+
+- name: Create a group for node_exporter
+  ansible.builtin.group:
+    name: "{{ node_exporter_group }}"
+    state: present
+
+- name: Create a user for node_exporter
+  ansible.builtin.user:
+    name: "{{ node_exporter_user }}"
+    group: "{{ node_exporter_group }}"
+    system: yes
+    shell: /bin/false
+    create_home: no
+
+- name: Download and unarchive node_exporter
+  ansible.builtin.unarchive:
+    src: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: /tmp/
+    remote_src: yes
+    creates: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+
+- name: Copy node_exporter binary
+  ansible.builtin.copy:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+    dest: "{{ node_exporter_bin_dir }}/"
+    remote_src: yes
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Template node_exporter systemd service file
+  ansible.builtin.template:
+    src: node_exporter.service.j2
+    dest: "{{ node_exporter_service_file }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart node_exporter
+
+- name: Ensure node_exporter service is started and enabled
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Cleanup node_exporter archive and directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64"
+    - "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
