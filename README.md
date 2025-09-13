@@ -145,3 +145,38 @@ For more detailed information on the playbook and roles, please see the document
 ## ✨ Extending the tool
 
 To add support for new panel types (e.g., `barchart`, `table`), simply modify the `create_panel` function in the `grafana_helper.py` script by adding a new `elif` condition.
+
+##  Ansible Playbooks
+
+This project also includes a set of Ansible playbooks to deploy a full monitoring stack, including Grafana, Prometheus, Loki, and various exporters.
+
+### Structure
+
+The Ansible files are located in the `ansible/` directory, with the following structure:
+
+-   `inventory/`: Contains the inventory file (`hosts`) to define your servers.
+-   `playbooks/`: Contains the main playbooks for each component.
+-   `roles/`: Contains the roles for each component, with tasks and handlers.
+-   `doc/`: Contains documentation for each playbook in English and French.
+
+### Usage
+
+1.  **Install Ansible**: Make sure you have Ansible installed on your control machine.
+2.  **Configure Inventory**: Edit the `ansible/inventory/hosts` file to match your server inventory.
+3.  **Run Playbooks**: Run the desired playbook using the `ansible-playbook` command.
+
+For example, to deploy Grafana:
+
+```bash
+ansible-playbook -i ansible/inventory/hosts ansible/playbooks/grafana.yml
+```
+
+### Available Playbooks
+
+-   `grafana.yml`: Deploys Grafana.
+-   `prometheus.yml`: Deploys Prometheus.
+-   `loki.yml`: Deploys Loki for log aggregation.
+-   `exporter.yml`: Deploys the Prometheus Node Exporter to all hosts.
+-   `metricbeat.yml`: Deploys Metricbeat to all hosts.
+
+For more detailed information on each playbook, refer to the documentation in the `ansible/doc/` directory.

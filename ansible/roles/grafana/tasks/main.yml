@@ -1,4 +1,5 @@
 ---
+
 - name: Install prerequisite packages
   ansible.builtin.apt:
     name:

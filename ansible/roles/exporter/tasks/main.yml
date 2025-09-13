@@ -1,0 +1,10 @@
+---
+    state: present
+    update_cache: yes
+  notify: restart node exporter
+
+- name: Start Node Exporter service
+  ansible.builtin.service:
+    name: prometheus-node-exporter
+    state: started
+    enabled: yes

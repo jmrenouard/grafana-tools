@@ -94,3 +94,4 @@
   loop:
     - "/tmp/prometheus-{{ prometheus_version }}.linux-amd64"
     - "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+
