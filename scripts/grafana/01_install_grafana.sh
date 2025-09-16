@@ -75,11 +75,10 @@ success "Tous les paquets ont été installés."
 # --- Démarrage et Activation des Services ---
 info "Démarrage et activation des services principaux..."
 systemctl daemon-reload
+
 systemctl enable grafana-server
 systemctl start grafana-server || error "Le démarrage du service grafana-server a échoué."
-systemctl enable prometheus
-systemctl start prometheus || error "Le démarrage du service prometheus a échoué."
-success "Services Grafana et Prometheus démarrés et activés."
+success "Le service grafana-server a été démarré et activé."
 
 # --- Pause pour démarrage ---
 info "Pause de 10 secondes pour laisser le temps aux services de démarrer complètement..."
@@ -87,12 +86,19 @@ sleep 10
 
 # --- Tests Post-Installation ---
 info "Validation de l'installation..."
-
 # Validation Grafana
 if ! systemctl is-active --quiet grafana-server; then error "Le service grafana-server n'a pas pu démarrer."; fi
 if ! ss -tuln | grep -q ':3000'; then error "Grafana n'écoute pas sur le port 3000."; fi
 if ! curl -s -I http://localhost:3000 | grep -q "HTTP/1.1 302 Found"; then error "La réponse de Grafana sur localhost:3000 est inattendue."; fi
 success "Grafana est actif et répond correctement."
+
+systemctl enable prometheus
+systemctl start prometheus || error "Le démarrage du service prometheus a échoué."
+success "Le service prometheus a été démarré et activé."
+
+# --- Pause pour démarrage ---
+info "Pause de 10 secondes pour laisser le temps aux services de démarrer complètement..."
+sleep 10
 
 # Validation Prometheus
 if ! systemctl is-active --quiet prometheus; then error "Le service prometheus n'a pas pu démarrer."; fi
