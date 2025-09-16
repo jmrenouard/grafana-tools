@@ -39,8 +39,8 @@ else
     echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list
     
     info "Mise à jour des paquets et installation de Grafana..."
-    apt-get update &>/dev/null
-    apt-get install -y grafana &>/dev/null
+    apt-get update #&>/dev/null
+    apt-get install -y grafana #&>/dev/null
     success "Grafana a été installé."
 fi
 
