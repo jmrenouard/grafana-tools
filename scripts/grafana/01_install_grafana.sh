@@ -104,6 +104,6 @@ sleep 10s
 # Validation Prometheus
 if ! systemctl is-active --quiet prometheus; then error "Le service prometheus n'a pas pu démarrer."; fi
 if ! ss -tuln | grep -q ':9090'; then error "Prometheus n'écoute pas sur le port 9090."; fi
-if ! curl -s -I http://localhost:9090/classic/status | grep -q "HTTP/1.1 200 OK"; then error "La réponse de Prometheus sur localhost:9090 est inattendue."; fi
+if ! curl -s http://localhost:9090/classic/status | grep -q "HTTP/1.1 200 OK"; then error "La réponse de Prometheus sur localhost:9090 est inattendue."; fi
 success "Prometheus est actif et répond correctement."
 end_success "Installation et validation de la stack de monitoring terminées avec succès."
