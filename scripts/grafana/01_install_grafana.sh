@@ -62,7 +62,8 @@ wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyr
 echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list
 
 info "Mise à jour de la liste des paquets..."
-apt-get update || error "La mise à jour de la liste des paquets a échoué."
+apt-get update &>/dev/null || error "La mise à jour de la liste des paquets a échoué."
+success "Le cache APT a été mis à jour."
 
 info "Installation de la suite de paquets..."
 for pck in $PCK_LIST; do
