@@ -9,7 +9,7 @@ L'accès final se fera via http://localhost (ou http://\<IP\_DU\_SERVEUR\>) sur 
 ## **📦 Fichiers**
 
 * run\_all.sh: Script principal qui exécute tous les autres scripts dans l'ordre.  
-* 01\_install\_grafana.sh: Installe Grafana.  
+* 01\_install\_grafana.sh: Installe la stack de monitoring Grafana (prometheus, alert-manage, grafana-server).  
 * 02\_install\_nginx.sh: Installe Nginx.  
 * 03\_configure\_nginx\_proxy.sh: Configure Nginx en reverse proxy.  
 * 04\_configure\_firewall.sh: Configure le pare-feu UFW.

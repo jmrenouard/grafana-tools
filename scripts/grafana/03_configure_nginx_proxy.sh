@@ -9,10 +9,12 @@ set -o pipefail
 
 # --- Couleurs et Fonctions ---
 C_RESET='\033[0m'; C_RED='\033[0;31m'; C_GREEN='\033[0;32m'; C_YELLOW='\033[0;33m'; C_BLUE='\033[0;34m'
-info() { echo -e "${C_BLUE}[INFO]${C_RESET} $1"; }
-success() { echo -e "${C_GREEN}[SUCCESS]${C_RESET} $1"; }
-warn() { echo -e "${C_YELLOW}[WARNING]${C_RESET} $1"; }
-error() { echo -e "${C_RED}[ERROR]${C_RESET} $1" >&2; exit 1; }
+info() { echo -e    "${C_BLUE}[INFO   ]${C_RESET}ℹ️ $1"; }
+success() { echo -e "${C_GREEN}[SUCCESS]${C_RESET}✅ $1"; }
+warn() { echo -e    "${C_YELLOW}[WARN   ]${C_RESET}⚠️ $1"; }
+error() { echo -e   "${C_RED}[ERROR  ]${C_RESET}❌ $1" >&2; echo ".... Fin le script avec une erreur"; exit 1; }
+start_script() { echo -e "${C_BLUE}[START  ]${C_RESET}🏁 $1🚀"; }
+end_success() { echo -e "${C_GREEN}[END    ]${C_RESET}🏁 $1"; exit 0; }
 
 # --- Constantes ---
 NGINX_CONF_FILE="/etc/nginx/sites-available/grafana-local"
@@ -20,7 +22,7 @@ NGINX_ENABLED_LINK="/etc/nginx/sites-enabled/grafana-local"
 DEFAULT_SITE_LINK="/etc/nginx/sites-enabled/default"
 
 # --- Début du script ---
-info "### Étape 3 : Configuration de Nginx en Reverse Proxy ###"
+start_script "### Étape 3 : Configuration de Nginx en Reverse Proxy ###"
 
 # --- Tests Prérequis ---
 info "Vérification des prérequis..."
@@ -92,3 +94,4 @@ if ! curl -s -I http://localhost | grep -q "HTTP/1.1 302 Found"; then
     error "Le reverse proxy Nginx ne semble pas fonctionner correctement. La réponse de http://localhost est inattendue."
 fi
 success "Le reverse proxy Nginx fonctionne et redirige vers la page de login de Grafana."
+end_success "Configuration de Nginx en reverse proxy terminée avec succès."

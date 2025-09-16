@@ -1,80 +1,101 @@
 #!/bin/bash
 
 # ==============================================================================
-# Script 1 : Installation de Grafana OSS
+# Script 1 : Installation de la stack de monitoring (Grafana, Prometheus, etc.)
 # ==============================================================================
 
 set -e
 set -o pipefail
-
-# --- Couleurs et Fonctions (dupliqué pour l'exécution autonome) ---
+# --- Couleurs et Fonctions ---
 C_RESET='\033[0m'; C_RED='\033[0;31m'; C_GREEN='\033[0;32m'; C_YELLOW='\033[0;33m'; C_BLUE='\033[0;34m'
-info() { echo -e "${C_BLUE}[INFO]${C_RESET} $1"; }
-success() { echo -e "${C_GREEN}[SUCCESS]${C_RESET} $1"; }
-warn() { echo -e "${C_YELLOW}[WARNING]${C_RESET} $1"; }
-error() { echo -e "${C_RED}[ERROR]${C_RESET} $1" >&2; exit 1; }
+info() { echo -e    "${C_BLUE}[INFO   ]${C_RESET}ℹ️ $1"; }
+success() { echo -e "${C_GREEN}[SUCCESS]${C_RESET}✅ $1"; }
+warn() { echo -e    "${C_YELLOW}[WARN   ]${C_RESET}⚠️ $1"; }
+error() { echo -e   "${C_RED}[ERROR  ]${C_RESET}❌ $1" >&2; echo ".... Fin le script avec une erreur"; exit 1; }
+start_script() { echo -e "${C_BLUE}[START  ]${C_RESET}🏁 $1🚀"; }
+end_success() { echo -e "${C_GREEN}[END    ]${C_RESET}🏁 $1"; exit 0; }
+# --- Liste des Paquets ---
+PCK_LIST="grafana
+prometheus
+prometheus-node-exporter
+prometheus-alertmanager
+prometheus-pushgateway
+prometheus-process-exporter
+net-tools
+jq
+curl
+vim
+htop
+nload
+nmap
+git
+unzip
+zip
+python3
+python3-pip
+python3-venv
+python3-prometheus-client
+pigz
+pv
+sysstat
+bind9-dnsutils"
 
 # --- Début du script ---
-info "### Étape 1 : Installation de Grafana ###"
+start_script "### Étape 1 : Installation de la Stack de Monitoring ###"
 
 # --- Tests Prérequis ---
-info "Vérification des prérequis pour Grafana..."
-
-if command -v grafana-server &>/dev/null; then
-    warn "Grafana semble déjà installé. Poursuite pour assurer la configuration."
-else
-    if ! command -v wget &>/dev/null; then
-        error "'wget' n'est pas installé. Veuillez l'installer avec 'sudo apt install wget'."
-    fi
-    if ! command -v gpg &>/dev/null; then
-        error "'gpg' n'est pas installé. Veuillez l'installer avec 'sudo apt install gpg'."
-    fi
-    success "Prérequis pour l'installation validés."
-
-    # --- Installation ---
-    info "Ajout du référentiel APT de Grafana..."
-    apt-get install -y apt-transport-https software-properties-common &>/dev/null
-    mkdir -p /etc/apt/keyrings/
-    wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null
-    echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list
-    
-    info "Mise à jour des paquets et installation de Grafana..."
-    apt-get update #&>/dev/null
-    apt-get install -y grafana #&>/dev/null
-    success "Grafana a été installé."
+info "Vérification des prérequis..."
+if command -v grafana-server &>/dev/null || command -v prometheus &>/dev/null; then
+    warn "Grafana ou Prometheus semble déjà installé. Le script va s'assurer que tous les paquets sont présents."
 fi
+success "Prérequis validés."
 
-# --- Démarrage et Activation du Service ---
-info "Démarrage et activation du service grafana-server..."
+# --- Installation ---
+info "Mise à jour du cache APT et installation des dépendances..."
+apt-get update >/dev/null
+apt-get install software-properties-common apt-transport-https wget gpg -y || error "L'installation des dépendances a échoué."
+
+info "Configuration du référentiel Grafana..."
+rm -f /etc/apt/sources.list.d/grafana.list
+mkdir -p /etc/apt/keyrings/
+wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null || error "Échec du téléchargement ou du traitement de la clé GPG de Grafana."
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list
+
+info "Mise à jour de la liste des paquets..."
+apt-get update || error "La mise à jour de la liste des paquets a échoué."
+
+info "Installation de la suite de paquets..."
+for pck in $PCK_LIST; do
+  echo " * Installation de $pck..."
+  apt-get install -y "$pck" || error "L'installation du paquet '$pck' a échoué."
+done
+success "Tous les paquets ont été installés."
+
+# --- Démarrage et Activation des Services ---
+info "Démarrage et activation des services principaux..."
 systemctl daemon-reload
-systemctl start grafana-server
 systemctl enable grafana-server
+systemctl start grafana-server || error "Le démarrage du service grafana-server a échoué."
+systemctl enable prometheus
+systemctl start prometheus || error "Le démarrage du service prometheus a échoué."
+success "Services Grafana et Prometheus démarrés et activés."
+
+# --- Pause pour démarrage ---
+info "Pause de 10 secondes pour laisser le temps aux services de démarrer complètement..."
+sleep 10
 
 # --- Tests Post-Installation ---
-info "Validation de l'installation de Grafana..."
+info "Validation de l'installation..."
 
-# 1. Vérifier si le service est actif
-if ! systemctl is-active --quiet grafana-server; then
-    error "Le service grafana-server n'a pas pu démarrer."
-fi
-success "Le service grafana-server est actif."
+# Validation Grafana
+if ! systemctl is-active --quiet grafana-server; then error "Le service grafana-server n'a pas pu démarrer."; fi
+if ! ss -tuln | grep -q ':3000'; then error "Grafana n'écoute pas sur le port 3000."; fi
+if ! curl -s -I http://localhost:3000 | grep -q "HTTP/1.1 302 Found"; then error "La réponse de Grafana sur localhost:3000 est inattendue."; fi
+success "Grafana est actif et répond correctement."
 
-# 2. Vérifier si le service est activé au démarrage
-if ! systemctl is-enabled --quiet grafana-server; then
-    warn "Le service grafana-server n'est pas activé au démarrage."
-else
-    success "Le service grafana-server est activé au démarrage."
-fi
-
-# 3. Vérifier si le port 3000 est en écoute
-if ! ss -tuln | grep -q ':3000'; then
-    error "Grafana n'écoute pas sur le port 3000."
-fi
-success "Grafana écoute bien sur le port 3000."
-
-# 4. Vérifier la réponse HTTP locale
-info "Test de la réponse HTTP sur http://localhost:3000..."
-if ! curl -s -I http://localhost:3000 | grep -q "HTTP/1.1 302 Found"; then
-    error "La réponse de Grafana sur localhost:3000 est inattendue."
-fi
-success "Grafana répond correctement en local."
+# Validation Prometheus
+if ! systemctl is-active --quiet prometheus; then error "Le service prometheus n'a pas pu démarrer."; fi
+if ! ss -tuln | grep -q ':9090'; then error "Prometheus n'écoute pas sur le port 9090."; fi
+if ! curl -s -I http://localhost:9090/graph | grep -q "HTTP/1.1 200 OK"; then error "La réponse de Prometheus sur localhost:9090 est inattendue."; fi
+success "Prometheus est actif et répond correctement."
+end_success "Installation et validation de la stack de monitoring terminées avec succès."
