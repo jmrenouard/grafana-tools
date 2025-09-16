@@ -53,7 +53,7 @@ success "Prérequis validés."
 # --- Installation ---
 info "Mise à jour du cache APT et installation des dépendances..."
 apt-get update >/dev/null
-apt-get install software-properties-common apt-transport-https wget gpg -y || error "L'installation des dépendances a échoué."
+apt-get install software-properties-common apt-transport-https wget gpg -y &>/dev/null|| error "L'installation des dépendances a échoué."
 
 info "Configuration du référentiel Grafana..."
 rm -f /etc/apt/sources.list.d/grafana.list
@@ -68,6 +68,7 @@ info "Installation de la suite de paquets..."
 for pck in $PCK_LIST; do
   echo " * Installation de $pck..."
   apt-get install -y "$pck" &>/dev/null || error "L'installation du paquet '$pck' a échoué."
+  success "Le paquet '$pck' a été installé avec succès."
 done
 success "Tous les paquets ont été installés."
 
