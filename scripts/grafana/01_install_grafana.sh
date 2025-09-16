@@ -67,7 +67,7 @@ apt-get update || error "La mise à jour de la liste des paquets a échoué."
 info "Installation de la suite de paquets..."
 for pck in $PCK_LIST; do
   echo " * Installation de $pck..."
-  apt-get install -y "$pck" || error "L'installation du paquet '$pck' a échoué."
+  apt-get install -y "$pck" &>/dev/null || error "L'installation du paquet '$pck' a échoué."
 done
 success "Tous les paquets ont été installés."
 
