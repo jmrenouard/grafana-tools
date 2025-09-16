@@ -83,7 +83,7 @@ success "Le service grafana-server a été démarré et activé."
 
 # --- Pause pour démarrage ---
 info "Pause de 10 secondes pour laisser le temps aux services de démarrer complètement..."
-sleep 10
+sleep 10s
 
 # --- Tests Post-Installation ---
 info "Validation de l'installation..."
@@ -99,7 +99,7 @@ success "Le service prometheus a été démarré et activé."
 
 # --- Pause pour démarrage ---
 info "Pause de 10 secondes pour laisser le temps aux services de démarrer complètement..."
-sleep 10
+sleep 10s
 
 # Validation Prometheus
 if ! systemctl is-active --quiet prometheus; then error "Le service prometheus n'a pas pu démarrer."; fi
