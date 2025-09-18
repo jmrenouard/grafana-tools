@@ -139,8 +139,8 @@ This project now includes a set of Ansible playbooks and roles to deploy a full 
 
 For more detailed information on the playbook and roles, please see the documentation:
 
--   [English Documentation](./ansible/doc/doc_monitoring.md)
--   [French Documentation](./ansible/doc/doc_monitoring_fr.md)
+-   [English Documentation](../grafana-training/ansible/doc/doc_monitoring.md)
+-   [French Documentation](../grafana-training/ansible/doc/doc_monitoring_fr.md)
 
 ## ✨ Extending the tool
 
