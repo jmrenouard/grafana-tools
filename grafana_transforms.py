@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 class Transformation:
-    """Classe de base pour les transformations Grafana."""
+    """Base class for Grafana transformations."""
     def __init__(self, id, options=None):
         self.id = id
         self.options = options if options is not None else {}
