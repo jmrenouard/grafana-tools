@@ -20,7 +20,7 @@ dashboard:
   tags: ['social-media', 'linkedin', 'application', 'autogen']
   timezone: "browser"
 
-templating:
+variables:
   - name: "job"
     label: "Job"
     type: "query"

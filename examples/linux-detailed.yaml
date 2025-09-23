@@ -19,7 +19,7 @@ dashboard:
   tags: ['linux', 'node-exporter', 'autogen', 'detailed']
   timezone: "browser"
 
-templating:
+variables:
   - name: "instance"
     label: "Instance"
     type: "query"

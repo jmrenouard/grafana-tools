@@ -19,7 +19,7 @@ dashboard:
   tags: ['postgresql', 'database', 'autogen', 'stats']
   timezone: "browser"
 
-templating:
+variables:
   - name: "instance"
     label: "Instance"
     type: "query"

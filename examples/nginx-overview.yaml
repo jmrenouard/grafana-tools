@@ -20,7 +20,7 @@ dashboard:
   tags: ['nginx', 'web-server', 'autogen']
   timezone: "browser"
 
-templating:
+variables:
   - name: "instance"
     label: "Instance"
     type: "query"

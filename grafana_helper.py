@@ -125,7 +125,7 @@ def generate_dashboard(config):
     
     # --- Création des variables de templating ---
     templates = []
-    for var_config in config.get('templating', []):
+    for var_config in config.get('variables', []):
         templates.append(Template(
             name=var_config.get('name'),
             label=var_config.get('label'),
@@ -275,7 +275,7 @@ dashboard:
   timezone: "browser"
 
 # Variables du dashboard (pour le rendre dynamique)
-templating:
+variables:
   - name: "instance"
     label: "Instance"
     type: "query"

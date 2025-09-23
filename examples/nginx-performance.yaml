@@ -21,7 +21,7 @@ dashboard:
   tags: ['nginx', 'web-server', 'autogen', 'performance']
   timezone: "browser"
 
-templating:
+variables:
   - name: "instance"
     label: "Instance"
     type: "query"

@@ -22,7 +22,7 @@ dashboard:
   tags: ['sql', 'business-intelligence', 'application', 'autogen']
   timezone: "browser"
 
-templating:
+variables:
   - name: "time_interval"
     label: "Time Interval"
     type: "interval"
