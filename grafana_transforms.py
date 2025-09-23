@@ -16,7 +16,7 @@ class Transformation:
 # --- Transformations de Filtrage et Sélection ---
 
 class FilterByName(Transformation):
-    """Filtre les champs par leur nom."""
+    """Filters fields by their name."""
     def __init__(self, include=None):
         options = {
             "include": {"names": include}
