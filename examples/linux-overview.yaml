@@ -78,12 +78,24 @@ panels:
     targets:
       - expr: 'node_memory_MemTotal_bytes{instance=~"$instance"} - node_memory_MemAvailable_bytes{instance=~"$instance"}'
         legendFormat: "{{instance}} - Used"
+        refId: "A"
       - expr: 'node_memory_MemAvailable_bytes{instance=~"$instance"}'
         legendFormat: "{{instance}} - Available"
+        refId: "B"
       - expr: 'node_memory_Buffers_bytes{instance=~"$instance"}'
         legendFormat: "{{instance}} - Buffers"
+        refId: "C"
       - expr: 'node_memory_Cached_bytes{instance=~"$instance"}'
         legendFormat: "{{instance}} - Cached"
+        refId: "D"
+    transformations:
+      - type: "merge"
+      - type: "filterByName"
+        options:
+          include:
+            - "Time"
+            - "Value #A"
+            - "Value #B"
 
   # --- Espace Disque ---
   - title: "Root Filesystem Usage (%)"
