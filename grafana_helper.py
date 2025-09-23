@@ -44,6 +44,7 @@ from grafanalib.core import (
     SECONDS_FORMAT, BYTES_FORMAT, PERCENT_FORMAT
 )
 from grafanalib._gen import DashboardEncoder
+from grafana_transforms import TRANSFORMATIONS_MAP
 
 # --- Mapping des unités pour une utilisation simple dans le YAML ---
 UNIT_FORMATS = {
@@ -63,6 +64,21 @@ def create_panel(panel_config):
     grid_pos = panel_config.get('gridPos')
     datasource = panel_config.get('datasource')
     options = panel_config.get('options', {})
+
+    # --- Création des transformations ---
+    transformations = []
+    for t_config in panel_config.get('transformations', []):
+        t_type = t_config.get('type')
+        if not t_type:
+            raise ValueError(f"Transformation pour le panneau '{title}' n'a pas de 'type'.")
+
+        transform_class = TRANSFORMATIONS_MAP.get(t_type)
+        if not transform_class:
+            raise NotImplementedError(f"Le type de transformation '{t_type}' n'est pas supporté.")
+
+        # Les options sont passées en tant que kwargs à l'initialiseur de la classe
+        transform_options = t_config.get('options', {})
+        transformations.append(transform_class(**transform_options))
 
     # --- Création de la position et de la taille du panneau ---
     if not grid_pos:
@@ -86,28 +102,27 @@ def create_panel(panel_config):
 
     # --- Sélection du type de panneau ---
     panel = None
+    common_args = {
+        'title': title,
+        'dataSource': datasource,
+        'targets': targets,
+        'gridPos': panel_grid_pos,
+        'transformations': transformations,
+    }
+
     if panel_type == 'timeseries':
         panel = TimeSeries(
-            title=title,
-            dataSource=datasource,
-            targets=targets,
-            gridPos=panel_grid_pos,
+            **common_args,
             unit=UNIT_FORMATS.get(options.get('unit'), '')
         )
     elif panel_type == 'stat':
         panel = Stat(
-            title=title,
-            dataSource=datasource,
-            targets=targets,
-            gridPos=panel_grid_pos,
+            **common_args,
             format=UNIT_FORMATS.get(options.get('unit'), 'none')
         )
     elif panel_type == 'gauge':
         panel = GaugePanel(
-            title=title,
-            dataSource=datasource,
-            targets=targets,
-            gridPos=panel_grid_pos,
+            **common_args,
             format=UNIT_FORMATS.get(options.get('unit'), 'none')
         )
     # Ajoutez d'autres types de panneaux ici (elif panel_type == '...':)
