@@ -7,7 +7,7 @@ class Transformation:
         self.options = options if options is not None else {}
 
     def to_json_data(self):
-        """Retourne la structure JSON pour la transformation."""
+        """Returns the JSON structure for the transformation."""
         return {
             'id': self.id,
             'options': self.options,
