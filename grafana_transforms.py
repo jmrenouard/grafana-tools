@@ -107,7 +107,7 @@ class Organize(Transformation):
         if renameByName:
             options["renameByName"] = renameByName
         if sortBy:
-             options["sortBy"] = sortBy
+            options["sortBy"] = sortBy
         super().__init__('organize', options)
 
 class LabelsToFields(Transformation):
