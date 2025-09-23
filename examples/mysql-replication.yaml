@@ -19,7 +19,7 @@ dashboard:
   tags: ['mysql', 'mariadb', 'database', 'autogen', 'replication']
   timezone: "browser"
 
-templating:
+variables:
   - name: "instance"
     label: "Slave Instance"
     type: "query"

@@ -19,7 +19,7 @@ dashboard:
   tags: ['mongodb', 'atlas', 'database', 'nosql', 'autogen']
   timezone: "browser"
 
-templating:
+variables:
   - name: "project"
     label: "Project"
     type: "query"

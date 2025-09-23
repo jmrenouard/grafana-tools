@@ -20,7 +20,7 @@ dashboard:
   tags: ['application', 'sales', 'ecommerce', 'autogen']
   timezone: "browser"
 
-templating:
+variables:
   - name: "region"
     label: "Region"
     type: "query"
