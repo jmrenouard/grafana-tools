@@ -1,31 +1,42 @@
 # -*- coding: utf-8 -*-
+"""Grafana panel transformation builders mapped from dashboard YAML definitions."""
+
 
 class Transformation:
     """Base class for Grafana transformations."""
-    def __init__(self, id, options=None):
+
+    def __init__(self, id, options=None):  # pylint: disable=redefined-builtin
+        """Initialize a transformation with its Grafana identifier and options dict."""
         self.id = id
         self.options = options if options is not None else {}
 
     def to_json_data(self):
-        """Returns the JSON structure for the transformation."""
+        """Return the JSON structure for the transformation."""
         return {
             'id': self.id,
             'options': self.options,
         }
 
-# --- Transformations de Filtrage et Sélection ---
+
+# --- Filtering and Selection Transformations ---
+
 
 class FilterByName(Transformation):
-    """Filters fields by their name."""
+    """Filter fields by their name."""
+
     def __init__(self, include=None):
+        """Include only fields matching the given names."""
         options = {
             "include": {"names": include}
         }
         super().__init__('filterFieldsByName', options)
 
+
 class FilterByValue(Transformation):
-    """Filtre les données en fonction des valeurs."""
+    """Filter data rows based on field values."""
+
     def __init__(self, field, operator, value):
+        """Filter records where `field` satisfies `operator` against `value`."""
         options = {
             "filters": [
                 {
@@ -42,36 +53,48 @@ class FilterByValue(Transformation):
         }
         super().__init__('filterByValue', options)
 
+
 class FilterByQuery(Transformation):
-    """Masque ou affiche des requêtes."""
+    """Show or hide query results by query refId."""
+
     def __init__(self, refIds):
+        """Keep data frames matching the specified query refIds."""
         options = {
             "refIds": refIds
         }
         super().__init__('filterByRefId', options)
 
 
-# --- Transformations de Combinaison ---
+# --- Combining Transformations ---
+
 
 class Merge(Transformation):
-    """Fusionne les résultats de plusieurs requêtes."""
+    """Merge results from multiple queries into one frame."""
+
     def __init__(self):
+        """Initialize a merge transformation."""
         super().__init__('merge')
 
+
 class OuterJoin(Transformation):
-    """Joint plusieurs séries temporelles sur un label commun."""
+    """Join multiple time series on a shared label field."""
+
     def __init__(self, field):
+        """Join series frames by the specified field name."""
         options = {
             "join": field
         }
         super().__init__('outerJoin', options)
 
 
-# --- Transformations de Calcul et d'Agrégation ---
+# --- Calculation and Aggregation Transformations ---
+
 
 class AddFieldFromCalculation(Transformation):
-    """Crée un champ à partir d'un calcul."""
+    """Create a computed field from an arithmetic or reduced expression."""
+
     def __init__(self, mode, reducer, expression=None):
+        """Initialize a calculated field transformation."""
         options = {
             'mode': mode,
             'reducer': reducer,
@@ -80,17 +103,23 @@ class AddFieldFromCalculation(Transformation):
             options['expression'] = expression
         super().__init__('addFieldFromCalculation', options)
 
+
 class Reduce(Transformation):
-    """Réduit une série de données à une valeur unique."""
+    """Reduce each series to a single summary value."""
+
     def __init__(self, reducer):
+        """Apply the specified reducer to collapse time series rows."""
         options = {
             "reducers": [reducer]
         }
         super().__init__('reduce', options)
 
+
 class GroupBy(Transformation):
-    """Regroupe les données par labels et effectue une agrégation."""
+    """Group rows by labels and aggregate remaining columns."""
+
     def __init__(self, fields, aggregations):
+        """Group frames on `fields` using `aggregations` rules."""
         options = {
             "fields": fields,
             "aggregations": aggregations
@@ -98,11 +127,14 @@ class GroupBy(Transformation):
         super().__init__('groupBy', options)
 
 
-# --- Transformations de Formatage et Renommage ---
+# --- Formatting and Renaming Transformations ---
+
 
 class Organize(Transformation):
-    """Réorganise, renomme ou cache les champs."""
+    """Reorder, rename, or hide columns."""
+
     def __init__(self, renameByName=None, sortBy=None):
+        """Configure optional field rename mappings and display ordering."""
         options = {}
         if renameByName:
             options["renameByName"] = renameByName
@@ -110,9 +142,12 @@ class Organize(Transformation):
             options["sortBy"] = sortBy
         super().__init__('organize', options)
 
+
 class LabelsToFields(Transformation):
-    """Extrait les labels Prometheus pour les transformer en champs."""
+    """Extract Prometheus labels into dedicated table columns."""
+
     def __init__(self, labels=None, valueLabel=None):
+        """Convert selected metric labels into fields."""
         options = {}
         if labels:
             options['labels'] = labels
@@ -120,33 +155,46 @@ class LabelsToFields(Transformation):
             options['valueLabel'] = valueLabel
         super().__init__('labelsToFields', options)
 
+
 class SeriesToRows(Transformation):
-    """Transforme plusieurs séries temporelles en une seule table."""
+    """Combine multiple time series into a single tabular view."""
+
     def __init__(self):
+        """Initialize a series-to-rows transformation."""
         super().__init__('seriesToRows')
 
+
 class ConvertFieldType(Transformation):
-    """Change le type de données d'un champ."""
+    """Convert the data type of a target field."""
+
     def __init__(self, field, targetType):
+        """Cast `field` to `targetType`."""
         options = {
             'field': field,
             'targetType': targetType
         }
         super().__init__('convertFieldType', options)
 
+
 class GroupToNestedTable(Transformation):
-    """Regroupe les lignes dans une table imbriquée."""
+    """Group matching rows into nested sub-tables."""
+
     def __init__(self, key):
+        """Nest rows grouped by `key`."""
         options = {
             'key': key
         }
         super().__init__('groupToNestedTable', options)
 
-# --- Transformations Spécifiques ---
+
+# --- Specific Transformations ---
+
 
 class SortBy(Transformation):
-    """Trie les données en fonction de la valeur d'un champ."""
+    """Sort rows by the value of a specified field."""
+
     def __init__(self, field, reverse=False):
+        """Sort frames by `field` ascending or descending."""
         options = {
             'sort': [
                 {
@@ -157,17 +205,23 @@ class SortBy(Transformation):
         }
         super().__init__('sortBy', options)
 
+
 class Limit(Transformation):
-    """Limite le nombre de lignes affichées."""
+    """Limit the maximum number of displayed rows."""
+
     def __init__(self, limit):
+        """Cap output rows at `limit`."""
         options = {
             'limit': limit
         }
         super().__init__('limit', options)
 
+
 class ExtractFields(Transformation):
-    """Extrait des parties d'un champ en utilisant une expression régulière."""
+    """Extract structured values from a field using a regular expression."""
+
     def __init__(self, source, regex, rename=None):
+        """Parse `source` field values using `regex` and optional `rename` mapping."""
         options = {
             'source': source,
             'regex': regex
@@ -176,12 +230,16 @@ class ExtractFields(Transformation):
             options['rename'] = rename
         super().__init__('extractFields', options)
 
+
 class Debug(Transformation):
-    """Affiche le résultat des données à chaque étape."""
+    """Display transformation frame output for debugging."""
+
     def __init__(self):
+        """Initialize a Grafana debug transformation."""
         super().__init__('debug')
 
-# --- Dictionnaire pour mapper les noms de transformation YAML aux classes Python ---
+
+# Mapping from YAML transformation type names to Python builder classes.
 TRANSFORMATIONS_MAP = {
     'filterByName': FilterByName,
     'filterByValue': FilterByValue,
