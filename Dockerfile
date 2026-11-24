@@ -10,8 +10,8 @@ COPY requirements.txt .
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the script into the container
-COPY grafana_helper.py .
+# Copy application modules into the container
+COPY grafana_helper.py grafana_transforms.py ./
 
 # Make port 80 available to the world outside this container
 # (Not strictly necessary for this script, but good practice if it were a web service)
